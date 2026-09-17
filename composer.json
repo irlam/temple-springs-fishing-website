@@ -1,0 +1,8 @@
+{
+  "name": "irlam/temple-springs",
+  "description": "Temple Springs booking and ticket management",
+  "type": "project",
+  "require": {"php": "^8.3", "ext-pdo": "*", "ext-pdo_sqlite": "*", "ext-curl": "*", "ext-mbstring": "*", "ext-xmlwriter": "*", "stripe/stripe-php": "^17.0", "phpmailer/phpmailer": "^6.10", "bacon/bacon-qr-code": "^3.0"},
+  "autoload": {"psr-4": {"Temple\\": "app/"}},
+  "scripts": {"test": "php tests/run.php"}
+}
