@@ -1,13 +1,170 @@
-CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-INSERT INTO settings VALUES ('bookings_enabled','0'),('daily_capacity','20');
-CREATE TABLE ticket_types (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL CHECK(price>=0), active INTEGER NOT NULL DEFAULT 1);
-INSERT INTO ticket_types(name,price) VALUES ('Adult day ticket',1000),('Junior day ticket',500);
-CREATE TABLE days (date TEXT PRIMARY KEY, capacity INTEGER CHECK(capacity>=0), closed INTEGER NOT NULL DEFAULT 0, note TEXT NOT NULL DEFAULT '');
-CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL, password TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','bailiff')), active INTEGER NOT NULL DEFAULT 1);
-CREATE TABLE bookings (id INTEGER PRIMARY KEY, reference TEXT UNIQUE NOT NULL, mode TEXT NOT NULL DEFAULT 'test' CHECK(mode IN ('test','live')), token TEXT UNIQUE NOT NULL, date TEXT NOT NULL, type_name TEXT NOT NULL, quantity INTEGER NOT NULL CHECK(quantity>0), unit_price INTEGER NOT NULL, total INTEGER NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL, status TEXT NOT NULL, expires_at INTEGER NOT NULL, session_id TEXT UNIQUE, payment_intent TEXT UNIQUE, created_at INTEGER NOT NULL, paid_at INTEGER, refund_amount INTEGER NOT NULL DEFAULT 0, note TEXT NOT NULL DEFAULT '', created_by INTEGER REFERENCES users(id));
-CREATE INDEX bookings_day ON bookings(date,status);
-CREATE TABLE tickets (id INTEGER PRIMARY KEY, booking_id INTEGER NOT NULL REFERENCES bookings(id), token TEXT UNIQUE NOT NULL, checked_at INTEGER, checked_by INTEGER REFERENCES users(id));
-CREATE TABLE events (id TEXT PRIMARY KEY, type TEXT NOT NULL, received_at INTEGER NOT NULL);
-CREATE TABLE audit (id INTEGER PRIMARY KEY, user_id INTEGER REFERENCES users(id), action TEXT NOT NULL, booking_id INTEGER REFERENCES bookings(id), detail TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL);
-CREATE TABLE outbox (id INTEGER PRIMARY KEY, booking_id INTEGER UNIQUE NOT NULL REFERENCES bookings(id), status TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0, next_attempt INTEGER NOT NULL DEFAULT 0, last_error TEXT, sent_at INTEGER);
-CREATE TABLE rate_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, until INTEGER NOT NULL);
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+INSERT INTO settings (key, value) VALUES
+    ('bookings_enabled', '0'),
+    ('daily_capacity', '20');
+
+
+CREATE TABLE ticket_types (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    price INTEGER NOT NULL CHECK(price >= 0),
+    active INTEGER NOT NULL DEFAULT 1
+);
+
+INSERT INTO ticket_types (name, price) VALUES
+    ('Adult day ticket', 1000),
+    ('Junior day ticket', 500);
+
+
+CREATE TABLE days (
+    date TEXT PRIMARY KEY,
+    capacity INTEGER CHECK(capacity >= 0),
+    closed INTEGER NOT NULL DEFAULT 0,
+    note TEXT NOT NULL DEFAULT ''
+);
+
+
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    password TEXT NOT NULL,
+    role TEXT NOT NULL CHECK(role IN ('admin', 'bailiff')),
+    active INTEGER NOT NULL DEFAULT 1
+);
+
+
+CREATE TABLE bookings (
+    id INTEGER PRIMARY KEY,
+
+    reference TEXT UNIQUE NOT NULL,
+
+    mode TEXT NOT NULL DEFAULT 'test'
+        CHECK(mode IN ('test', 'live')),
+
+    token TEXT UNIQUE NOT NULL,
+
+    date TEXT NOT NULL,
+    type_name TEXT NOT NULL,
+
+    quantity INTEGER NOT NULL
+        CHECK(quantity > 0),
+
+    unit_price INTEGER NOT NULL
+        CHECK(unit_price >= 0),
+
+    total INTEGER NOT NULL,
+
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK(status IN (
+            'pending',
+            'paid',
+            'cancelled',
+            'expired',
+            'refunded'
+        )),
+
+    expires_at INTEGER NOT NULL,
+
+    session_id TEXT UNIQUE,
+    payment_intent TEXT UNIQUE,
+
+    created_at INTEGER NOT NULL,
+    paid_at INTEGER,
+
+    refund_amount INTEGER NOT NULL DEFAULT 0,
+
+    note TEXT NOT NULL DEFAULT '',
+
+    created_by INTEGER REFERENCES users(id),
+
+    CHECK(
+        total = quantity * unit_price
+    ),
+
+    CHECK(
+        (status IN ('paid', 'refunded') AND paid_at IS NOT NULL)
+        OR
+        (status IN ('pending', 'cancelled', 'expired') AND paid_at IS NULL)
+    )
+);
+
+
+CREATE INDEX bookings_status
+ON bookings(status);
+
+CREATE INDEX bookings_date_status
+ON bookings(date, status);
+
+
+CREATE TABLE tickets (
+    id INTEGER PRIMARY KEY,
+
+    booking_id INTEGER NOT NULL
+        REFERENCES bookings(id),
+
+    token TEXT UNIQUE NOT NULL,
+
+    checked_at INTEGER,
+
+    checked_by INTEGER
+        REFERENCES users(id)
+);
+
+
+CREATE TABLE events (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    received_at INTEGER NOT NULL
+);
+
+
+CREATE TABLE audit (
+    id INTEGER PRIMARY KEY,
+
+    user_id INTEGER
+        REFERENCES users(id),
+
+    action TEXT NOT NULL,
+
+    booking_id INTEGER
+        REFERENCES bookings(id),
+
+    detail TEXT NOT NULL DEFAULT '',
+
+    created_at INTEGER NOT NULL
+);
+
+
+CREATE TABLE outbox (
+    id INTEGER PRIMARY KEY,
+
+    booking_id INTEGER UNIQUE NOT NULL
+        REFERENCES bookings(id),
+
+    status TEXT NOT NULL DEFAULT 'pending',
+
+    attempts INTEGER NOT NULL DEFAULT 0,
+
+    next_attempt INTEGER NOT NULL DEFAULT 0,
+
+    last_error TEXT,
+
+    sent_at INTEGER
+);
+
+
+CREATE TABLE rate_limits (
+    key TEXT PRIMARY KEY,
+    count INTEGER NOT NULL,
+    until INTEGER NOT NULL
+);
