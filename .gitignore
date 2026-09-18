@@ -7,3 +7,6 @@ test-results/
 /var/
 *.sqlite*
 /config.local.php
+
+.temple-initial-setup.lock
+config.php.setup-*

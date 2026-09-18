@@ -23,6 +23,7 @@ jobs:
       - run: php tests/run.php
       - run: node tests/http.mjs
       - run: node tests/cli.mjs
+      - run: node tests/plesk-setup.mjs
       - run: php tests/demo.php
       - run: node tests/demo-browser.mjs
       - run: node tests/migration.mjs

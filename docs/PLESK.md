@@ -16,6 +16,20 @@ php bin/console.php migrate
 
 Migration 002 upgrades the booking status constraints while preserving existing bookings, tickets and check-ins. Back up first. Do not delete the database or rerun SQL manually. Keep bookings OFF. Open `/` for the redesigned homepage and `/demo.php` for the complete payment-free practice journey; no Stripe account is needed for the demo. If the old homepage remains, confirm deployment completed, hard-refresh the browser, and purge any existing Cloudflare cached homepage. See [DEMO.md](DEMO.md).
 
+## Initial admin setup without SSH
+
+Use this only before any staff accounts exist. Keep the document root ending in `/public` and allow PHP to read its parent application directory. Composer dependencies must already be installed. This CLI-only script is outside the public root and cannot be run by a website visitor.
+
+1. Pull and deploy the latest `main` through Plesk Git.
+2. Go to **Websites & Domains → Scheduled Tasks → Add Task** and choose **Run a PHP script**.
+3. Browse to `fishing.defecttracker.uk/httpdocs/bin/plesk-setup.php` (relative to the subscription root). Choose PHP 8.3 or later with the required extensions.
+4. In **Arguments**, enter only your admin email address. No password goes into the task.
+5. Click **Run Now**. Remove the task after successful setup; it should not run repeatedly.
+6. In Plesk File Manager open `fishing.defecttracker.uk/httpdocs/var/initial-admin.txt` (or your configured private data directory). Save the generated password in your password manager, then delete this file.
+7. Sign in at `/staff.php` with that email and password.
+
+The script creates missing private configuration or fills an empty app key, preserves other configuration, backs up a pre-existing database, applies migrations and creates one administrator with a random password stored hashed in SQLite. It requires test mode, leaves bookings OFF, never prints credentials in task output, and refuses to reset existing staff accounts. It needs no Stripe or SMTP credentials. Do not put this script, configuration or credentials under `public/`.
+
 ## 1. Hosting and document root
 
 1. In Plesk, open **Websites & Domains → fishing.defecttracker.uk → Git**. Use `https://github.com/irlam/temple-springs-fishing-website.git`, branch `main`. For SSH/private access, use a Plesk-generated read-only deploy key. Start with manual deployment.
