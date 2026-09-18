@@ -66,13 +66,8 @@ CREATE TABLE bookings (
 
     status TEXT NOT NULL DEFAULT 'pending'
         CHECK(status IN (
-            'creating',
             'pending',
             'paid',
-            'complimentary',
-            'failed',
-            'partially_refunded',
-            'refund_required',
             'cancelled',
             'expired',
             'refunded'
@@ -97,9 +92,9 @@ CREATE TABLE bookings (
     ),
 
     CHECK(
-        (status IN ('paid', 'partially_refunded', 'refunded', 'refund_required') AND paid_at IS NOT NULL)
+        (status IN ('paid', 'refunded') AND paid_at IS NOT NULL)
         OR
-        (status IN ('creating', 'pending', 'complimentary', 'failed', 'cancelled', 'expired') AND paid_at IS NULL)
+        (status IN ('pending', 'cancelled', 'expired') AND paid_at IS NULL)
     )
 );
 

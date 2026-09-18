@@ -1,6 +1,6 @@
 # Temple Springs booking platform
 
-PHP 8.3+ and SQLite application for the **proposed community-led Temple Springs fishing restoration project, Bolton**. Existing branding, original landscape illustration and project information are retained. **Fishing rights and access remain unconfirmed. New installations default to bookings OFF and Stripe test mode.** No credentials are included.
+PHP 8.3+ and SQLite application for the **proposed community-led Temple Springs fishing restoration project, Bolton**. A redesigned mobile-first fishery homepage retains the existing branding, original landscape illustration and provisional project information. **Fishing rights and access remain unconfirmed. New installations default to bookings OFF and Stripe test mode.** No credentials are included.
 
 ## Deploy
 
@@ -16,6 +16,12 @@ php bin/console.php health
 ```
 
 The `user` command prompts for a password privately; there is no web installer, default password or public account registration. Run it from an interactive terminal. Staff sign-in: `/staff.php`.
+
+## Try booking without a payment account
+
+Open `/demo.php` after installing Composer dependencies. The separate practice system needs **no Stripe keys, SMTP account or initial admin**. Choose a date, tickets and a made-up name, simulate a payment, then view, print and scan individual QR tickets. You can also simulate failure, cancellation and refund. No money is collected, no email is sent, and demo tickets never grant access. See [docs/DEMO.md](docs/DEMO.md).
+
+Real bookings remain OFF. When rights and access are confirmed, the existing Stripe Checkout integration can be configured first in test mode, then live mode.
 
 ## What is included
 
@@ -36,6 +42,9 @@ composer install
 php tests/run.php
 node tests/http.mjs
 node tests/cli.mjs
+php tests/demo.php
+node tests/demo-browser.mjs
+node tests/migration.mjs
 # Optional browser checks after installing Playwright and Chromium locally:
 TEMPLE_BROWSER=1 node tests/http.mjs
 ```

@@ -2,6 +2,20 @@
 
 The application has been built for your existing repository and Plesk hosting. It has **not** been installed on your server. Keep public bookings OFF while access and angling rights are unconfirmed.
 
+## Updating the existing installation for the redesigned site
+
+In Plesk Git, pull `main`, then deploy. Keep your existing private `config.php` and data directory. For the current installation, the confirmed document root is `fishing.defecttracker.uk/httpdocs/public`; run commands from its parent `httpdocs` directory. The alternative paths below are examples for a fresh installation, not a reason to move the working site.
+
+As the subscription user, using the matching PHP CLI version:
+
+```sh
+php bin/console.php backup
+composer install --no-dev --prefer-dist --optimize-autoloader
+php bin/console.php migrate
+```
+
+Migration 002 upgrades the booking status constraints while preserving existing bookings, tickets and check-ins. Back up first. Do not delete the database or rerun SQL manually. Keep bookings OFF. Open `/` for the redesigned homepage and `/demo.php` for the complete payment-free practice journey; no Stripe account is needed for the demo. If the old homepage remains, confirm deployment completed, hard-refresh the browser, and purge any existing Cloudflare cached homepage. See [DEMO.md](DEMO.md).
+
 ## 1. Hosting and document root
 
 1. In Plesk, open **Websites & Domains → fishing.defecttracker.uk → Git**. Use `https://github.com/irlam/temple-springs-fishing-website.git`, branch `main`. For SSH/private access, use a Plesk-generated read-only deploy key. Start with manual deployment.

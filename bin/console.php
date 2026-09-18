@@ -6,12 +6,19 @@ try {
     $command=$argv[1]??'help';
     if($command==='migrate') {
         $s->run('CREATE TABLE IF NOT EXISTS migrations(version TEXT PRIMARY KEY, applied_at INTEGER NOT NULL)');
-        foreach(glob(dirname(__DIR__).'/migrations/*.sql') as $file) {
-            $s->tx(function() use($s,$file) {
-                $version=basename($file);
-                if(!$s->one('SELECT version FROM migrations WHERE version=?',[$version])) { $s->db->exec(file_get_contents($file)); $s->run('INSERT INTO migrations VALUES(?,?)',[$version,time()]); echo "Applied $version\n"; }
-            });
-        }
+        $s->db->exec('PRAGMA foreign_keys=OFF');
+        try {
+            foreach(glob(dirname(__DIR__).'/migrations/*.sql') as $file) {
+                $s->tx(function() use($s,$file) {
+                    $version=basename($file);
+                    if(!$s->one('SELECT version FROM migrations WHERE version=?',[$version])) {
+                        $s->db->exec(file_get_contents($file));
+                        if($s->all('PRAGMA foreign_key_check')) throw new RuntimeException('Migration would break existing record links; rolled back.');
+                        $s->run('INSERT INTO migrations VALUES(?,?)',[$version,time()]); echo "Applied $version\n";
+                    }
+                });
+            }
+        } finally { $s->db->exec('PRAGMA foreign_keys=ON'); }
         echo "Database ready. Existing booking controls were preserved; new installations default OFF.\n";
     } elseif($command==='user') {
         $email=strtolower($argv[2]??''); $role=$argv[3]??''; $name=$argv[4]??'';

@@ -1,16 +1,20 @@
 # Verification record and launch checks
 
-Verified locally on 17 September 2026 using PHP 8.3.6, SQLite, Node 24 and headless Chromium 153. All databases, customer details and credentials used by automated tests were temporary fixtures. **No real Stripe payment or email was sent. Public bookings remain OFF in the shipped defaults.**
+Verified locally on 18 September 2026 using PHP 8.3.6, SQLite, Node 24 and headless Chromium 153. All databases, customer details and credentials used by automated tests were temporary fixtures. **No real Stripe payment or email was sent. Public bookings remain OFF in the shipped defaults.**
 
 ## Completed checks
 
-**103 automated checks passed:**
+**145 automated checks passed:**
 
 - **53 service/payment/security checks** (`php tests/run.php`): disabled reservation and payment initiation; date/quantity/email validation; admin-only complimentary issue; capacity holds; six separate processes racing for one remaining place; closures; unpaid sessions; amount/currency/mode checks; duplicate and out-of-order events; signed/tampered/stale webhooks; individual random QR tokens; wrong-date, cancelled, refunded, wrong-mode and already-used validation; explicit check-in and staff identity; four simultaneous bailiffs checking one ticket; cancellation and expiry; late payment refund-review handling; partial/full refunds; SMTP retry; rate limits; SQLite backup integrity.
 - **45 HTTP/browser checks** (`TEMPLE_BROWSER=1 node tests/http.mjs`): forged booking requests while OFF, CSRF, authentication, admin/bailiff permissions, non-guessable customer pages, private-file 404s, real HTTP signed webhook processing and retries, ticket generation only after confirmation, SVG QR output, check-in endpoints, CSV formula safety, opening rights confirmation, admin pricing/closure/complimentary flows, asset-only service-worker policy, 390px mobile layouts, staff browser sign-in, generated QR image decoding using the local decoder, and no PHP/JavaScript errors. Without Playwright, the same suite runs **35 HTTP checks**.
 - **5 command-line checks** (`node tests/cli.mjs`): initial migration, default OFF, repeat migration preserving settings, private backup creation and maintenance without credentials.
 
-PHP lint passed for application, endpoints, commands and test fixtures. JavaScript syntax checks passed. Composer audit reported **no known security vulnerability advisories** for the installed locked dependencies at verification time. Desktop homepage and mobile ticket/dashboard screenshots were inspected locally; the existing site identity and layouts were retained.
+- **19 demo service checks** (`php tests/demo.php`): separate database, capacity, expiry, confirmation idempotency, individual tokens, failed/cancelled/refunded states, wrong-date and repeat check-in, and retention.
+- **20 demo HTTP/browser checks** (`TEMPLE_BROWSER=1 node tests/demo-browser.mjs`): no payment credentials or production database, CSRF, server prices, phone-sized navigation, complete simulated checkout, two individual QR tickets, actual QR decoding, anonymous scanner without customer names, explicit check-in and refund rejection. Without Playwright this runs **7 HTTP checks**.
+- **3 migration checks** (`node tests/migration.mjs`): upgrading the restrictive legacy schema preserves existing bookings, tickets, check-ins, audit and outbox records; foreign keys remain valid; new reservations accept the application state sequence.
+
+PHP lint passed for application, endpoints, commands and test fixtures. JavaScript syntax checks passed. Composer audit reported **no known security vulnerability advisories** for the installed locked dependencies at verification time. The redesigned desktop/mobile homepage and mobile demo checkout/ticket screenshots were inspected locally. The earlier dependency audit is recorded above; this update does not change dependencies.
 
 The repository includes a GitHub Actions workflow for PHP/HTTP/CLI checks on pushes and pull requests. Local results above are independent of whether the remote workflow has run. Browser tests require Playwright plus Chromium; optionally set `CHROMIUM_EXECUTABLE` to an existing Chromium binary and `PHP_BIN` to a specific PHP executable. `TEMPLE_SCREENSHOTS` can point to a local output directory. Production needs neither Node nor Playwright.
 

@@ -23,4 +23,7 @@ jobs:
       - run: php tests/run.php
       - run: node tests/http.mjs
       - run: node tests/cli.mjs
-      - run: node --check public/booking.js && node --check public/sw.js
+      - run: php tests/demo.php
+      - run: node tests/demo-browser.mjs
+      - run: node tests/migration.mjs
+      - run: node --check public/booking.js && node --check public/sw.js && node --check public/fishery.js && node --check public/demo.js && node --check public/demo-scan.js

@@ -17,7 +17,7 @@ head('Plan a day by the water');
 if($error) notice($error);
 if($s->setting('bookings_enabled')!=='1') {
     notice('Bookings are not yet open. Temple Springs is a proposed community-led fishing restoration project. Angling rights and fishing access are not confirmed. Do not enter the site or fish on the basis of this website.');
-    echo '<a class="button" href="/#vision">Explore the project</a>';
+    echo '<a class="button" href="/demo.php">Try a booking — no payment needed</a> <a class="text-link" href="/#opening">Opening update</a>';
 } else {
     echo '<p>Choose a date, select your tickets and pay securely. Each angler receives their own QR ticket.</p><ol class="steps"><li>Choose date</li><li>Your tickets</li><li>Secure payment</li></ol><form method="get" class="panel"><label>Fishing date<input type="date" name="date" min="'.date('Y-m-d').'" max="'.date('Y-m-d',strtotime('+365 days')).'" value="'.h($date).'" required></label><button class="button">Check availability</button></form>';
     try {

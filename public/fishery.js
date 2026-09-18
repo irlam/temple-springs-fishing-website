@@ -1,0 +1,8 @@
+'use strict';
+const menu=document.querySelector('.menu-toggle'),nav=document.querySelector('#site-nav');
+if(menu&&nav){menu.hidden=false;nav.dataset.collapsed='true';menu.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(open));nav.dataset.collapsed=String(!open);});nav.addEventListener('click',e=>{if(e.target.closest('a')){menu.setAttribute('aria-expanded','false');nav.dataset.collapsed='true';}});}
+const year=document.querySelector('#year');if(year)year.textContent=new Date().getFullYear();
+const date=document.querySelector('#home-date');if(date){const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());date.min=today;date.value=today;}
+const form=document.querySelector('#contact-form'),status=document.querySelector('#form-status'),fields=document.querySelector('#contact-fields');
+if(form){(async()=>{try{const r=await fetch('/contact.php',{cache:'no-store'}),d=await r.json();if(!r.ok||!d.enabled)throw Error();document.querySelector('#form-token').value=d.token;fields.disabled=false;status.textContent='';}catch{status.textContent='Enquiries are not available yet. Please check back soon.';}})();form.addEventListener('submit',async e=>{e.preventDefault();const body=new FormData(form);fields.disabled=true;status.textContent='Sending your message…';try{const r=await fetch('/contact.php',{method:'POST',body}),d=await r.json();if(!r.ok)throw Error(d.message||'Unable to send. Please try later.');form.reset();status.textContent=d.message;}catch(e){status.textContent=e.message;}finally{fields.disabled=false;}});}
+if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
