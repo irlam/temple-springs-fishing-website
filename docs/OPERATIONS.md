@@ -51,3 +51,12 @@ Ticket URLs are bearer credentials. Do not share them publicly. Public QR image 
 ## Remaining operator decisions
 
 No opening date, lease, angling rights, access permission, final operating hours, real capacity or final price has been asserted by this application. Replace draft operating rules and complete organiser/privacy details before accepting bookings. The default configuration stays in Stripe test mode and does not contain real secrets.
+
+
+## Bailiff accounts in the dashboard
+
+Admins can open **Dashboard → Manage bailiffs** to create a bailiff with their own name, email and password. Share the login URL `/bailiff.php` and their password privately; no email is sent. Passwords must be 14–72 bytes long. The existing `/staff.php` entry remains available.
+
+Edit an account to change its name/email, optionally reset its password, or set its status to Disabled. Leave the password blank to keep it. Every save revokes that bailiff's existing sessions; re-enabling requires a fresh login. Disabled accounts retain their historical ticket check-ins and cannot sign in. Accounts are not deleted. Admin accounts cannot be edited or promoted through this page. Account changes are recorded in the audit trail without passwords.
+
+Bailiffs can search bookings and inspect/check in tickets. Fishery settings, complimentary issue, CSV export and account management remain admin-only. Install this update by pulling/deploying `main`; **no new migration or setup task is needed**. Existing staff sessions must sign in again after deployment.

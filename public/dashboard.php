@@ -30,7 +30,7 @@ if(isset($_GET['export'])) {
     $s->audit($u['id'],'csv_export'); exit;
 }
 head('Fishery dashboard'); if($error) notice($error);
-echo '<div class="toolbar"><a class="button" href="/scan.php">Scan & check in</a>'.($isAdmin?'<a class="button secondary" href="/settings.php">Manage fishery</a>':'').'<form method="post" action="/staff.php">'.csrf().'<input type="hidden" name="action" value="logout"><button class="button secondary">Sign out</button></form></div>';
+echo '<div class="toolbar"><a class="button" href="/scan.php">Scan & check in</a>'.($isAdmin?'<a class="button secondary" href="/settings.php">Manage fishery</a><a class="button secondary" href="/bailiffs.php">Manage bailiffs</a>':'').'<form method="post" action="/staff.php">'.csrf().'<input type="hidden" name="action" value="logout"><button class="button secondary">Sign out</button></form></div>';
 notice('Public bookings: '.($s->setting('bookings_enabled')==='1'?'ON':'OFF').' · Signed in as '.$u['name'].' ('.$u['role'].')');
 $a=$booking->availability(date('Y-m-d')); $checkins=$s->one('SELECT COUNT(*) n FROM tickets WHERE checked_at>=?',[strtotime('today')])['n'];
 $payments=$s->one("SELECT COALESCE(SUM(total-refund_amount),0) n FROM bookings WHERE status IN ('paid','partially_refunded','refunded','refund_required')")['n'];

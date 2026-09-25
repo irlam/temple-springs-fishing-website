@@ -25,7 +25,7 @@ try{
  r=await fetch(base+'/staff.php');html=await r.text();const publicCookie=r.headers.get('set-cookie').split(';')[0],publicCsrf=csrf(html);
  r=await fetch(base+'/book.php',{method:'POST',headers:{cookie:publicCookie},body:new URLSearchParams({csrf:publicCsrf,date:booking.date,type:'1',quantity:'1',name:'Forgery',email:'test@example.test',rules:'yes'})});
  check((await r.text()).includes('Bookings are not yet open'),'valid-CSRF forged POST still cannot bypass OFF');
- for(const route of ['/dashboard.php','/settings.php','/scan.php?token='+'a'.repeat(64)]){
+ for(const route of ['/dashboard.php','/settings.php','/bailiffs.php','/scan.php?token='+'a'.repeat(64)]){
   r=await fetch(base+route,{redirect:'manual'});check(r.status===303&&r.headers.get('location')==='/staff.php','authentication required: '+route.split('?')[0]);
  }
  r=await fetch(base+'/booking.php?token='+booking.token);html=await r.text();check(!html.includes('class="qr"')&&html.includes('Payment has not yet been confirmed'),'success/status URL cannot issue tickets');
@@ -61,6 +61,39 @@ try{
  await fetch(base+'/settings.php',{method:'POST',headers:{cookie:admin},body:new URLSearchParams({csrf:adminCsrf,action:'day',date:booking.date,capacity:'5'})});
  r=await fetch(base+'/settings.php',{method:'POST',redirect:'manual',headers:{cookie:admin},body:new URLSearchParams({csrf:adminCsrf,action:'comp',date:booking.date,type:'1',quantity:'1',name:'Guest Example',email:'guest@example.test',reason:'Recorded test invitation'})});check(r.status===303,'admin issues complimentary ticket');
  r=await fetch(base+r.headers.get('location'),{headers:{cookie:admin}});html=await r.text();check(html.includes('Recorded test invitation')&&html.includes('complimentary'),'complimentary issue retains reason and status');
+ // Account administration, separate bailiff sign-in and session revocation.
+ r=await fetch(base+'/bailiffs.php',{headers:{cookie:bailiff}});check(r.status===403,'bailiff cannot view account management');
+ r=await fetch(base+'/bailiffs.php',{method:'POST',headers:{cookie:bailiff},body:new URLSearchParams({action:'save',id:'0',name:'Intruder',email:'intruder@example.test',password:'Intruder-password-123',active:'1'})});check(r.status===403,'bailiff cannot forge account creation');
+ r=await fetch(base+'/bailiffs.php',{headers:{cookie:admin}});html=await r.text();const accountsCsrf=csrf(html);
+ const accountPost=async(fields)=>fetch(base+'/bailiffs.php',{method:'POST',redirect:'manual',headers:{cookie:admin},body:new URLSearchParams({csrf:accountsCsrf,action:'save',id:'0',name:'New Bailiff',email:'new-bailiff@example.test',password:'Bailiff-password-1234',active:'1',...fields})});
+ r=await accountPost({csrf:'bad'});check(r.status===403,'account changes require CSRF');
+ r=await accountPost({password:'short'});check((await r.text()).includes('between 14 and 72'),'short account password rejected');
+ r=await accountPost({email:'ADMIN@example.test'});check((await r.text()).includes('already used'),'duplicate email rejected case-insensitively');
+ r=await accountPost({role:'admin'});check(r.status===303,'admin creates individual bailiff account');
+ const newId=new URL(base+r.headers.get('location')).searchParams.get('id');
+ async function newLogin(password='Bailiff-password-1234',email='new-bailiff@example.test') {
+   let res=await fetch(base+'/bailiff.php'), page=await res.text(),cookie=res.headers.get('set-cookie').split(';')[0];
+   res=await fetch(base+'/bailiff.php',{method:'POST',redirect:'manual',headers:{cookie},body:new URLSearchParams({csrf:csrf(page),email,password})});
+   return {res,cookie:res.headers.get('set-cookie')?.split(';')[0]||cookie};
+ }
+ let individual=await newLogin();check(individual.res.status===303,'new bailiff signs in using dedicated login');
+ r=await fetch(base+'/dashboard.php',{headers:{cookie:individual.cookie}});html=await r.text();check(html.includes('New Bailiff (bailiff)')&&!html.includes('Manage bailiffs'),'forged role cannot elevate new account');
+ const edit=await accountPost({id:newId,name:'Updated Bailiff',password:''});check(edit.status===303,'admin edits bailiff keeping password');
+ r=await fetch(base+'/scan.php',{redirect:'manual',headers:{cookie:individual.cookie}});check(r.status===303,'editing revokes existing bailiff sessions');
+ individual=await newLogin();check(individual.res.status===303,'unchanged password still works after editing');
+ await accountPost({id:newId,password:'Replacement-password-1234'});
+ r=await fetch(base+'/dashboard.php',{redirect:'manual',headers:{cookie:individual.cookie}});check(r.status===303,'password reset revokes active session');
+ check((await newLogin()).res.status===200,'old password no longer signs in');
+ individual=await newLogin('Replacement-password-1234');check(individual.res.status===303,'replacement password signs in');
+ await accountPost({id:newId,password:'',active:'0'});
+ check((await newLogin('Replacement-password-1234')).res.status===200,'disabled bailiff cannot sign in');
+ await accountPost({id:newId,password:'',active:'1'});
+ r=await fetch(base+'/scan.php',{redirect:'manual',headers:{cookie:individual.cookie}});check(r.status===303,'re-enabling never revives a previous session');
+ const adminId=execFileSync(php,['-r',`require ${JSON.stringify(join(root,'app/bootstrap.php'))}; echo $s->one("SELECT id FROM users WHERE role='admin'")['id'];`],{env,encoding:'utf8'}).trim();
+ r=await accountPost({id:adminId});check(r.status===404,'bailiff editor cannot alter administrator accounts');
+ const audit=JSON.parse(execFileSync(php,['-r',`require ${JSON.stringify(join(root,'app/bootstrap.php'))}; echo json_encode($s->all("SELECT user_id,detail FROM audit WHERE action LIKE 'bailiff_%'"));`],{env,encoding:'utf8'}));
+ check(audit.length===5&&audit.every(a=>String(a.user_id)===adminId)&&!JSON.stringify(audit).includes('password-1234'),'account changes audited to admin without passwords');
+ r=await fetch(base+'/dashboard.php',{headers:{cookie:admin}});check(r.status===200,'bailiff changes do not sign admin out');
  const sw=await readFile(join(root,'public/sw.js'),'utf8');check(!/ASSETS=\[[^\]]*(\.php|\.html|'\/')/.test(sw)&&sw.includes('u.search'),'service worker excludes pages and query strings');
  // Optional real browser checks: layout, QR decoding and actual sign-in on mobile.
  if(process.env.TEMPLE_BROWSER==='1'){
@@ -70,7 +103,7 @@ try{
    for(const path of ['/','/book.php','/staff.php']){await page.goto(base+path);check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'390px layout fits: '+path);}
    await page.getByLabel('Email',{exact:true}).fill('admin@example.test');await page.getByLabel('Password',{exact:true}).fill('Local-test-password-7491');await page.getByRole('button',{name:'Sign in securely'}).click();await page.waitForURL('**/dashboard.php');
    check(await page.getByRole('heading',{name:'Fishery dashboard'}).isVisible(),'browser staff sign-in works');
-   for(const path of ['/dashboard.php','/settings.php','/scan.php?token='+ticketToken]){await page.goto(base+path);check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'staff mobile layout fits: '+path.split('?')[0]);}
+   for(const path of ['/dashboard.php','/settings.php','/bailiffs.php','/scan.php?token='+ticketToken]){await page.goto(base+path);check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'staff mobile layout fits: '+path.split('?')[0]);}
    await page.goto(base+'/booking.php?token='+booking.token);
    const decoded=await page.evaluate(async()=>{const img=document.querySelector('.qr');await img.decode();const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const x=c.getContext('2d');x.fillStyle='white';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0);const d=x.getImageData(0,0,c.width,c.height);return window.jsQR(d.data,d.width,d.height)?.data;});
    check(decoded===base+'/scan.php?token='+ticketToken,'rendered QR decodes to opaque staff validation link');

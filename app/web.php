@@ -11,7 +11,7 @@ function redirect(string $url): never { header('Location: '.$url,true,303); exit
 function staff(bool $admin=false): array {
     global $s;
     $u=$s->one('SELECT * FROM users WHERE id=? AND active=1',[$_SESSION['user']??0]);
-    if(!$u || time()-($_SESSION['seen']??0)>1800 || time()-($_SESSION['login_at']??0)>43200) { unset($_SESSION['user']); if(basename($_SERVER['SCRIPT_NAME'])==='scan.php' && is_string($_GET['token']??null) && preg_match('/^[a-f0-9]{64}$/D',$_GET['token'])) $_SESSION['scan_after_login']=$_GET['token']; redirect('/staff.php'); }
+    if(!$u || !hash_equals((new Temple\StaffAccounts($s))->stamp($u,$GLOBALS['config']['app_key']),$_SESSION['auth_stamp']??'') || time()-($_SESSION['seen']??0)>1800 || time()-($_SESSION['login_at']??0)>43200) { unset($_SESSION['user']); if(basename($_SERVER['SCRIPT_NAME'])==='scan.php' && is_string($_GET['token']??null) && preg_match('/^[a-f0-9]{64}$/D',$_GET['token'])) $_SESSION['scan_after_login']=$_GET['token']; redirect('/staff.php'); }
     $_SESSION['seen']=time();
     if($admin && $u['role']!=='admin') { http_response_code(403); exit('Administrator access required.'); }
     return $u;
