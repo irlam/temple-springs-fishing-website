@@ -3,6 +3,14 @@ require dirname(__DIR__).'/app/web.php';
 $u=staff(true);$accounts=new Temple\StaffAccounts($s);$error='';
 $id=filter_var($_GET['id']??0,FILTER_VALIDATE_INT,['options'=>['min_range'=>0]]);
 if($id===false) {http_response_code(404);exit('Bailiff not found.');}
+if(post() && in_array(field('action'),['photo','remove_photo'],true)) {
+    checkCsrf();
+    try {
+        $id=(int)field('id');
+        (new Temple\BailiffPhotos($s,$data))->save((int)$u['id'],$id,$_FILES['photo']??null,field('action')==='remove_photo');
+        $_SESSION['account_notice']='Bailiff photo updated.'; redirect('/bailiffs.php?id='.$id);
+    } catch(RuntimeException $e) { $_SESSION['account_notice']=$e instanceof PDOException?'Unable to save photo. Please retry.':$e->getMessage();redirect('/bailiffs.php?id='.(int)$id); }
+}
 if(post()) {
     checkCsrf();
     try {
@@ -26,6 +34,11 @@ if(isset($_SESSION['account_notice'])) {notice($_SESSION['account_notice']);unse
 echo '<p>Each bailiff has their own email and password. They can look up bookings, scan tickets and record bankside spot checks. Fishery settings, exports and account management remain admin-only.</p><p>Share the bailiff login address: <a class="text-link" href="/bailiff.php">'.h(rtrim($config['base_url'],'/').'/bailiff.php').'</a>. Give the password privately; no account email is sent.</p>';
 $name=$error?field('name'):($edit['name']??'');$email=$error?field('email'):($edit['email']??'');$active=$error?field('active'):($edit['active']??1);
 echo '<form method="post" class="panel narrow">'.csrf().'<h2>'.($edit?'Edit bailiff':'Add bailiff').'</h2><input type="hidden" name="action" value="save"><input type="hidden" name="id" value="'.(int)$id.'"><label>Full name<input name="name" maxlength="100" required value="'.h($name).'" autocomplete="off"></label><label>Email address<input type="email" name="email" maxlength="254" required value="'.h($email).'" autocomplete="off"></label><label>'.($edit?'New password (leave blank to keep current password)':'Password').'<input type="password" name="password" minlength="14" maxlength="72" autocomplete="new-password" '.($edit?'':'required').'></label><p class="quiet">Use 14–72 characters (up to 72 bytes). Share it privately with the bailiff.</p><label>Account status<select name="active"><option value="1" '.((string)$active==='1'?'selected':'').'>Active</option><option value="0" '.((string)$active==='0'?'selected':'').'>Disabled</option></select></label><p class="quiet">Saving signs this bailiff out on every device. Disabling blocks login and retains their check-in history.</p><h3>Public website listing</h3><label>Show on website<select name="published"><option value="0">Hidden</option><option value="1" '.(!empty($profile['published'])?'selected':'').'>Published</option></select></label><label>Public display name<input name="public_name" maxlength="100" value="'.h($profile['name']??'').'"></label><label>Short introduction<textarea name="bio" maxlength="500">'.h($profile['bio']??'').'</textarea></label><p class="quiet">Only active, published bailiffs appear. Login emails and passwords are never published. Confirm the bailiff agrees to these public details.</p><button class="button">Save bailiff</button></form>';
+if($edit) {
+    echo '<section class="panel narrow"><h2>Optional bailiff photo</h2><p>A clear portrait helps anglers recognise the bailiffs listed by Temple Springs. Obtain their agreement before publishing. Save profile changes above before uploading a photo.</p>';
+    if($s->setting('bailiff_photo_'.$id)) echo '<img class="bailiff-photo" src="/bailiff-photo.php?id='.(int)$id.'&amp;preview=1" alt="Current bailiff photo"><form method="post">'.csrf().'<input type="hidden" name="id" value="'.(int)$id.'"><button class="button secondary" name="action" value="remove_photo">Remove photo</button></form>';
+    echo '<form method="post" enctype="multipart/form-data">'.csrf().'<input type="hidden" name="action" value="photo"><input type="hidden" name="id" value="'.(int)$id.'"><label>Choose portrait<input type="file" name="photo" accept="image/jpeg,image/png" required></label><p class="quiet">JPEG or PNG, up to 2 MB and 8 megapixels. Photos are resized and location metadata removed. Published only while this account is active and its profile is published.</p><button class="button">Upload / replace photo</button></form></section>';
+} else echo '<p class="quiet">Save the bailiff account first, then add an optional photo.</p>';
 $rows=$s->all("SELECT id,name,email,active FROM users WHERE role='bailiff' ORDER BY active DESC,name,id");
 echo '<h2>Bailiff accounts</h2>';
 if(!$rows) notice('No bailiffs yet. Add your first account above.');

@@ -102,7 +102,30 @@ try{
  r=await fetch(base+'/spot-checks.php',{headers:{cookie:admin}});html=await r.text();check(html.includes('Peg 4')&&html.includes('staff ID'),'staff log shows notes and staff identity');
  await accountPost({id:newId,password:'',published:'1',public_name:'Pat on the bank',bio:'Here to help anglers.'});
  r=await fetch(base+'/team.php?format=json');let team=await r.json();check(team.length===1&&team[0].name==='Pat on the bank'&&!JSON.stringify(team).includes('@'),'only selected public profile data exposed');
+
+ const png=execFileSync(php,['-r',"$im=imagecreatetruecolor(20,30); imagepng($im);"]);
+ async function uploadPhoto(cookie=admin,csrfToken=accountsCsrf,bytes=png,type='image/png') {
+   const f=new FormData();f.set('csrf',csrfToken);f.set('action','photo');f.set('id',newId);f.set('photo',new Blob([bytes],{type}),type==='image/png'?'portrait.png':'bad.svg');
+   return fetch(base+'/bailiffs.php',{method:'POST',redirect:'manual',headers:{cookie},body:f});
+ }
+ check((await uploadPhoto(bailiff)).status===403,'bailiffs cannot upload portraits');
+ check((await uploadPhoto(admin,'bad')).status===403,'photo uploads require CSRF');
+ check((await uploadPhoto()).status===303,'admin uploads optional portrait');
+ r=await fetch(base+'/bailiff-photo.php?id='+newId);const photo=Buffer.from(await r.arrayBuffer());
+ check(r.status===200&&r.headers.get('content-type')==='image/jpeg'&&photo[0]===255&&photo[1]===216&&r.headers.get('cache-control').includes('no-store'),'photo re-encoded to JPEG and served without caching');
+ r=await fetch(base+'/team.php?format=json');team=await r.json();check(team[0].photo==='/bailiff-photo.php?id='+newId,'public profile includes portrait link');
+ await uploadPhoto(admin,accountsCsrf,'<svg onload="alert(1)"></svg>','image/svg+xml');
+ r=await fetch(base+'/bailiff-photo.php?id='+newId);check(Buffer.from(await r.arrayBuffer()).equals(photo),'invalid image rejected while existing portrait preserved');
+ await accountPost({id:newId,password:'',published:'0',public_name:'Pat on the bank'});
+ check((await fetch(base+'/bailiff-photo.php?id='+newId)).status===404,'unpublished portrait inaccessible publicly');
+ check((await fetch(base+'/bailiff-photo.php?id='+newId+'&preview=1',{headers:{cookie:admin}})).status===200,'admin can preview unpublished portrait');
+ check((await fetch(base+'/bailiff-photo.php?id='+newId+'&preview=1',{headers:{cookie:bailiff}})).status===403,'bailiff cannot preview hidden portrait');
+ await fetch(base+'/bailiffs.php',{method:'POST',headers:{cookie:admin},body:new URLSearchParams({csrf:accountsCsrf,id:newId,action:'remove_photo'})});
+ check((await fetch(base+'/bailiff-photo.php?id='+newId+'&preview=1',{headers:{cookie:admin}})).status===404,'admin can remove portrait');
+ await uploadPhoto();
  await accountPost({id:newId,password:'',published:'1',public_name:'Pat on the bank',active:'0'});
+ check((await fetch(base+'/bailiff-photo.php?id='+newId)).status===404,'disabled bailiff portrait inaccessible publicly');
+
  r=await fetch(base+'/team.php?format=json');check((await r.json()).length===0,'disabled bailiffs disappear from public list');
  const sw=await readFile(join(root,'public/sw.js'),'utf8');check(!/ASSETS=\[[^\]]*(\.php|\.html|'\/')/.test(sw)&&sw.includes('u.search'),'service worker excludes pages and query strings');
  // Optional real browser checks: layout, QR decoding and actual sign-in on mobile.
