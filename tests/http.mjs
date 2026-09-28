@@ -65,13 +65,13 @@ try{
  r=await fetch(base+'/bailiffs.php',{headers:{cookie:bailiff}});check(r.status===403,'bailiff cannot view account management');
  r=await fetch(base+'/bailiffs.php',{method:'POST',headers:{cookie:bailiff},body:new URLSearchParams({action:'save',id:'0',name:'Intruder',email:'intruder@example.test',password:'Intruder-password-123',active:'1'})});check(r.status===403,'bailiff cannot forge account creation');
  r=await fetch(base+'/bailiffs.php',{headers:{cookie:admin}});html=await r.text();const accountsCsrf=csrf(html);
- const accountPost=async(fields)=>fetch(base+'/bailiffs.php',{method:'POST',redirect:'manual',headers:{cookie:admin},body:new URLSearchParams({csrf:accountsCsrf,action:'save',id:'0',name:'New Bailiff',email:'new-bailiff@example.test',password:'Bailiff-password-1234',active:'1',...fields})});
+ const accountPost=async(fields)=>fetch(base+'/bailiffs.php',{method:'POST',redirect:'manual',headers:{cookie:admin},body:new URLSearchParams({csrf:accountsCsrf,action:'save',id:'0',name:'New Bailiff',email:'new-bailiff@example.test',password:'Bailiff8',active:'1',...fields})});
  r=await accountPost({csrf:'bad'});check(r.status===403,'account changes require CSRF');
- r=await accountPost({password:'short'});check((await r.text()).includes('between 14 and 72'),'short account password rejected');
+ r=await accountPost({password:'seven77'});check((await r.text()).includes('at least 8 characters'),'seven-character account password rejected');
  r=await accountPost({email:'ADMIN@example.test'});check((await r.text()).includes('already used'),'duplicate email rejected case-insensitively');
- r=await accountPost({role:'admin'});check(r.status===303,'admin creates individual bailiff account');
+ r=await accountPost({role:'admin'});check(r.status===303,'admin creates bailiff with eight-character password');
  const newId=new URL(base+r.headers.get('location')).searchParams.get('id');
- async function newLogin(password='Bailiff-password-1234',email='new-bailiff@example.test') {
+ async function newLogin(password='Bailiff8',email='new-bailiff@example.test') {
    let res=await fetch(base+'/bailiff.php'), page=await res.text(),cookie=res.headers.get('set-cookie').split(';')[0];
    res=await fetch(base+'/bailiff.php',{method:'POST',redirect:'manual',headers:{cookie},body:new URLSearchParams({csrf:csrf(page),email,password})});
    return {res,cookie:res.headers.get('set-cookie')?.split(';')[0]||cookie};

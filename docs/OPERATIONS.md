@@ -55,7 +55,7 @@ No opening date, lease, angling rights, access permission, final operating hours
 
 ## Bailiff accounts in the dashboard
 
-Admins can open **Dashboard → Manage bailiffs** to create a bailiff with their own name, email and password. Share the login URL `/bailiff.php` and their password privately; no email is sent. Passwords must be 14–72 bytes long. The existing `/staff.php` entry remains available.
+Admins can open **Dashboard → Manage bailiffs** to create a bailiff with their own name, email and password. Share the login URL `/bailiff.php` and their password privately; no email is sent. Passwords must contain at least 8 characters and be no more than 72 bytes long. The existing `/staff.php` entry remains available.
 
 Edit an account to change its name/email, optionally reset its password, or set its status to Disabled. Leave the password blank to keep it. Every save revokes that bailiff's existing sessions; re-enabling requires a fresh login. Disabled accounts retain their historical ticket check-ins and cannot sign in. Accounts are not deleted. Admin accounts cannot be edited or promoted through this page. Account changes are recorded in the audit trail without passwords.
 

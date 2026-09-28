@@ -10,7 +10,7 @@ final class StaffAccounts {
     public function saveBailiff(int $admin,int $id,string $name,string $email,string $password,bool $active,?array $profile=null): int {
         $name=trim($name);$email=strtolower(trim($email));
         if($name==='' || mb_strlen($name)>100 || strlen($email)>254 || !filter_var($email,FILTER_VALIDATE_EMAIL)) throw new RuntimeException('Enter a name (up to 100 characters) and a valid email address.');
-        if(($id===0 || $password!=='') && (strlen($password)<14 || strlen($password)>72)) throw new RuntimeException('Use a password between 14 and 72 bytes long.');
+        if(($id===0 || $password!=='') && (mb_strlen($password)<8 || strlen($password)>72)) throw new RuntimeException('Use at least 8 characters, up to 72 bytes.');
         if($profile!==null && (mb_strlen($profile['name']??'')>100 || mb_strlen($profile['bio']??'')>500 || (!empty($profile['published']) && trim($profile['name']??'')===''))) throw new RuntimeException('Enter a public name (up to 100 characters) and a bio up to 500 characters.');
         $hash=$password!==''?password_hash($password,PASSWORD_DEFAULT):null;
         return $this->s->tx(function() use($admin,$id,$name,$email,$hash,$active,$profile){
