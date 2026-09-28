@@ -1,0 +1,42 @@
+/* Decorative layers are confined to the artwork and never intercept controls. */
+.hero-scene{isolation:isolate;background:#143d35;box-shadow:0 22px 65px #153f361a}
+.hero-scene>.hero-shade{z-index:1;background:linear-gradient(90deg,#0a2720ed,#0a272099 48%,#0a27201a 85%)}
+.hero-content,.hero-coordinate,.art-caption{z-index:3}
+.water-art{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2;contain:paint}
+.water-light{position:absolute;inset:-25%;opacity:.24;background:radial-gradient(ellipse at 75% 35%,#e7eeb37a,transparent 32%),repeating-radial-gradient(ellipse at 80% 55%,transparent 0 42px,#cde2be25 44px 46px,transparent 49px 94px);transform:rotate(-12deg)}
+.water-fish{position:absolute;left:64%;top:45%;width:180px;height:75px;background:url('/assets/swimming-fish.svg') center/contain no-repeat;opacity:.34;filter:drop-shadow(0 16px 12px #082e2d55);transform:rotate(-18deg)}
+.water-fish.fish-two{left:77%;top:67%;width:110px;height:46px;opacity:.24;transform:rotate(158deg)}
+.water-fish.fish-three{left:87%;top:34%;width:72px;height:30px;opacity:.2;transform:rotate(-12deg)}
+.water-ripple{position:absolute;left:75%;top:68%;width:180px;height:52px;border:1px solid #e2edc76b;border-radius:50%;transform:rotate(-12deg);opacity:.25}
+.water-ripple.ripple-two{left:59%;top:39%;width:120px;height:35px;opacity:.2}
+.water-reeds{position:absolute;right:32px;bottom:-14px;display:flex;gap:13px;align-items:flex-end;transform-origin:bottom center;opacity:.7}
+.water-reeds i{display:block;width:5px;height:150px;border-radius:100% 0 0 0;background:linear-gradient(#abc183,#416752);transform:rotate(15deg);transform-origin:bottom}
+.water-reeds i:nth-child(2){height:210px;transform:rotate(-10deg)}
+.water-reeds i:nth-child(3){height:120px;transform:rotate(28deg)}
+.water-reeds i:nth-child(4){height:170px;transform:rotate(-20deg)}
+.motion-toggle{position:absolute;right:22px;bottom:48px;z-index:4;border:1px solid #d6e69d80;border-radius:30px;background:#102f29e6;color:#f7f7ef;padding:9px 14px;font:12px/1.4 Arial,sans-serif;min-height:40px;cursor:pointer}
+.motion-toggle[hidden]{display:none}
+.motion-toggle:hover{background:#254f40}
+.water-moving .water-light{animation:water-drift 24s ease-in-out infinite alternate}
+.water-moving .fish-one{animation:fish-glide 22s ease-in-out infinite alternate}
+.water-moving .fish-two{animation:fish-return 28s ease-in-out infinite alternate}
+.water-moving .fish-three{animation:fish-small 19s ease-in-out infinite alternate}
+.water-moving .water-ripple{animation:ripple-spread 8s ease-out infinite}
+.water-moving .ripple-two{animation-delay:-4s;animation-duration:11s}
+.water-moving .water-reeds{animation:reed-sway 7s ease-in-out infinite alternate}
+.water-paused .water-art *{animation-play-state:paused!important}
+@keyframes water-drift{to{transform:translate3d(-3%,3%,0) rotate(-7deg)}}
+@keyframes fish-glide{0%{transform:translate3d(-35px,45px,0) rotate(-18deg)}50%{transform:translate3d(45px,15px,0) rotate(-9deg)}100%{transform:translate3d(125px,-40px,0) rotate(-24deg)}}
+@keyframes fish-return{from{transform:translate3d(40px,-10px,0) rotate(158deg)}to{transform:translate3d(-145px,35px,0) rotate(170deg)}}
+@keyframes fish-small{from{transform:translate3d(-40px,0,0) rotate(-12deg)}to{transform:translate3d(70px,-35px,0) rotate(-28deg)}}
+@keyframes ripple-spread{0%{transform:rotate(-12deg) scale(.45);opacity:0}20%{opacity:.4}100%{transform:rotate(-12deg) scale(1.7);opacity:0}}
+@keyframes reed-sway{from{transform:rotate(-3deg)}to{transform:rotate(4deg)}}
+.ticket-section{background-color:#e9edde;background-image:radial-gradient(ellipse at 95% 20%,#c5d9aa66,transparent 45%),repeating-radial-gradient(ellipse at 0 100%,transparent 0 70px,#59724b09 72px 74px,transparent 76px 130px)}
+.visit-section{background-image:radial-gradient(ellipse at 100% 100%,#65845540,transparent 55%),repeating-radial-gradient(ellipse at 100% 0,transparent 0 100px,#d6e69d08 102px 104px,transparent 107px 170px)}
+.price-card{box-shadow:0 9px 26px #153f3607;transition:transform .25s ease,box-shadow .25s ease}
+@media(hover:hover){.price-card:hover{transform:translateY(-5px);box-shadow:0 16px 30px #153f3614}}
+@media(max-width:720px){.water-art{opacity:.55}.water-fish{left:62%;top:66%;width:120px;height:50px}.water-fish.fish-two{left:80%;top:43%;width:75px;height:32px}.fish-three,.water-reeds{display:none}.water-ripple{left:62%;top:82%;width:110px;height:30px}.motion-toggle{right:14px;bottom:40px;font-size:11px;padding:8px 11px}.hero-scene>.hero-shade{background:linear-gradient(90deg,#0a2720ed,#0a272099)}.water-light{opacity:.16}}
+@media(prefers-reduced-motion:reduce){.water-art *{animation:none!important}.price-card{transition:none}.price-card:hover{transform:none}.motion-toggle{display:none}}
+@media print{.water-art,.motion-toggle{display:none}}
+@media(max-width:720px){.hero-scene{height:590px}.hero-content{padding-top:65px}.motion-toggle{top:12px;bottom:auto}}
+@media(max-width:380px){.hero h1{font-size:50px}}
