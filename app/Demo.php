@@ -64,14 +64,14 @@ final class Demo {
         $t=$this->s->one('SELECT b.reference,b.date,b.type,b.status,t.checked_at FROM demo_tickets t JOIN demo_bookings b ON b.id=t.booking_id WHERE t.token=?',[$token]);
         if(!$t) return null;
         $t['type_name']=self::TYPES[$t['type']]['name'];
-        $t['state']=$t['status']!=='confirmed'?$t['status']:($t['checked_at']?'already-used':($t['date']!==date('Y-m-d')?'wrong-date':'valid'));
+        $t['state']=$t['status']!=='confirmed'?$t['status']:($t['date']!==date('Y-m-d')?'wrong-date':'valid');
         return $t;
     }
     public function checkIn(string $token): array {
         return $this->s->tx(function() use($token){
             $t=$this->validate($token);
             if(!$t || $t['state']!=='valid') throw new RuntimeException('Demo check-in refused: '.($t['state']??'invalid ticket'));
-            $this->s->run('UPDATE demo_tickets SET checked_at=? WHERE token=? AND checked_at IS NULL',[time(),$token]);
+            $this->s->run('UPDATE demo_tickets SET checked_at=? WHERE token=?',[time(),$token]);
             return $this->validate($token);
         });
     }

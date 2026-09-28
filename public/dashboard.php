@@ -30,12 +30,12 @@ if(isset($_GET['export'])) {
     $s->audit($u['id'],'csv_export'); exit;
 }
 head('Fishery dashboard'); if($error) notice($error);
-echo '<div class="toolbar"><a class="button" href="/scan.php">Scan & check in</a>'.($isAdmin?'<a class="button secondary" href="/settings.php">Manage fishery</a><a class="button secondary" href="/bailiffs.php">Manage bailiffs</a>':'').'<form method="post" action="/staff.php">'.csrf().'<input type="hidden" name="action" value="logout"><button class="button secondary">Sign out</button></form></div>';
+echo '<div class="toolbar"><a class="button" href="/scan.php">Bankside spot check</a><a class="button secondary" href="/spot-checks.php">Spot-check log</a>'.($isAdmin?'<a class="button secondary" href="/settings.php">Manage fishery</a><a class="button secondary" href="/bailiffs.php">Manage bailiffs</a>':'').'<form method="post" action="/staff.php">'.csrf().'<input type="hidden" name="action" value="logout"><button class="button secondary">Sign out</button></form></div>';
 notice('Public bookings: '.($s->setting('bookings_enabled')==='1'?'ON':'OFF').' · Signed in as '.$u['name'].' ('.$u['role'].')');
-$a=$booking->availability(date('Y-m-d')); $checkins=$s->one('SELECT COUNT(*) n FROM tickets WHERE checked_at>=?',[strtotime('today')])['n'];
+$a=$booking->availability(date('Y-m-d')); $checkins=$s->one("SELECT COUNT(*) n FROM audit WHERE action='spot_check' AND created_at>=?",[strtotime('today')])['n'];
 $payments=$s->one("SELECT COALESCE(SUM(total-refund_amount),0) n FROM bookings WHERE status IN ('paid','partially_refunded','refunded','refund_required')")['n'];
 $alerts=$s->one("SELECT COUNT(*) n FROM bookings WHERE status='refund_required'")['n'];
-echo '<div class="metrics"><article><strong>'.$a['used'].' / '.$a['capacity'].'</strong><span>Places reserved today'.($a['closed']?' · Closed':'').'</span></article><article><strong>'.$checkins.'</strong><span>Check-ins today</span></article><article><strong>'.money($payments).'</strong><span>Payments less refunds · All dates</span></article><article><strong>'.$alerts.'</strong><span>Payments needing refund review</span></article></div><form method="get" class="panel form-row"><label>Search bookings<input name="q" value="'.h($q).'" placeholder="Reference, name or email"></label><label>Fishing date<input type="date" name="date" value="'.h($date).'"></label><button class="button">Search</button></form>';
+echo '<div class="metrics"><article><strong>'.$a['used'].' / '.$a['capacity'].'</strong><span>Places reserved today'.($a['closed']?' · Closed':'').'</span></article><article><strong>'.$checkins.'</strong><span>Spot checks today</span></article><article><strong>'.money($payments).'</strong><span>Payments less refunds · All dates</span></article><article><strong>'.$alerts.'</strong><span>Payments needing refund review</span></article></div><form method="get" class="panel form-row"><label>Search bookings<input name="q" value="'.h($q).'" placeholder="Reference, name or email"></label><label>Fishing date<input type="date" name="date" value="'.h($date).'"></label><button class="button">Search</button></form>';
 if($isAdmin) echo '<p><a class="text-link" href="/dashboard.php?export=1&q='.urlencode($q).'&date='.urlencode($date).'">Export matching bookings as CSV</a></p>';
 $page=max(1,min(100000,(int)($_GET['page']??1))); $offset=($page-1)*30;
 $rows=$s->all('SELECT b.*,o.status email_status,o.last_error FROM bookings b LEFT JOIN outbox o ON o.booking_id=b.id WHERE '.$where.' ORDER BY b.id DESC LIMIT 31 OFFSET '.$offset,$args);
@@ -48,7 +48,7 @@ foreach(array_slice($rows,0,30) as $b) {
         if(in_array($b['status'],['creating','pending','complimentary'],true)) echo '<button name="action" value="cancel" class="button secondary">Cancel booking</button>';
         echo '</form>';
     }
-    foreach($s->all('SELECT * FROM tickets WHERE booking_id=?',[$b['id']]) as $i=>$t) echo '<a class="ticket-link" href="/scan.php?token='.h($t['token']).'">Ticket '.($i+1).' · '.($t['checked_at']?'Checked in':'Inspect').' ↗</a> ';
+    foreach($s->all('SELECT * FROM tickets WHERE booking_id=?',[$b['id']]) as $i=>$t) echo '<a class="ticket-link" href="/scan.php?token='.h($t['token']).'">Ticket '.($i+1).' · '.'Inspect ticket'.' ↗</a> ';
     echo '</article>';
 }
 if(!$rows) notice('No matching bookings.');

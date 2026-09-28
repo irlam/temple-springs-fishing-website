@@ -60,3 +60,12 @@ Admins can open **Dashboard → Manage bailiffs** to create a bailiff with their
 Edit an account to change its name/email, optionally reset its password, or set its status to Disabled. Leave the password blank to keep it. Every save revokes that bailiff's existing sessions; re-enabling requires a fresh login. Disabled accounts retain their historical ticket check-ins and cannot sign in. Accounts are not deleted. Admin accounts cannot be edited or promoted through this page. Account changes are recorded in the audit trail without passwords.
 
 Bailiffs can search bookings and inspect/check in tickets. Fishery settings, complimentary issue, CSV export and account management remain admin-only. Install this update by pulling/deploying `main`; **no new migration or setup task is needed**. Existing staff sessions must sign in again after deployment.
+
+
+## Bankside spot checks (supersedes arrival check-in)
+
+Arrival check-in is not required. Once fishing opens, a valid dated ticket and compliance with the rules are required, but the bailiff need not be present. The current project remains closed pending rights/access.
+
+Use **Bankside spot check** to scan or look up a ticket. Press **Record spot check** after reviewing it. This records a UK-displayable timestamp, immutable staff-name snapshot and staff ID, ticket ID, result and optional note. Wrong-date/refunded/cancelled results can be recorded as inspections, not approvals. Repeat checks do not consume tickets. Reposting the same form is idempotent; a new inspection form records a new event. The **Spot-check log** shows all records with pagination, or a booking's history. Historical arrival records remain intact; they do not prevent spot checks. The legacy checkIn service is retained for compatibility but no longer used by the staff scanner.
+
+In **Manage bailiffs**, set a public display name, introduction and Published status. Only active published bailiffs appear in the homepage team section and /team.php; emails are never public. Obtain their agreement before publishing. No database migration is required; profiles use existing settings and inspections use the existing append-only application audit trail. Deploy all files together. The anonymous demo simulates repeat checks but is separate from real staff inspection records.

@@ -13,7 +13,7 @@ try{
  test(count($d->outcome($b['token'],'confirmed')['tickets'])===2,'repeated simulation does not duplicate tickets');
  test($b['tickets'][0]['token']!==$b['tickets'][1]['token']&&strlen($b['tickets'][0]['token'])===64,'demo ticket tokens are distinct cryptographic tokens');
  $t=$b['tickets'][0]['token'];$v=$d->validate($t);test($v['state']==='valid'&&!isset($v['name'],$v['email'],$v['token']),'demo scan shows validity without customer details');
- $d->checkIn($t);test($d->validate($t)['state']==='already-used','explicit demo check-in records use');refused(fn()=>$d->checkIn($t),'repeat demo check-in rejected');
+ $d->checkIn($t);test($d->validate($t)['state']==='valid' && $d->validate($t)['checked_at']!==null,'demo spot check leaves ticket valid');test($d->checkIn($t)['state']==='valid','repeat demo spot checks allowed');
  $d->outcome($b['token'],'refunded');test($d->validate($t)['state']==='refunded'&&$d->availability($date)['remaining']===20,'simulated refund invalidates tickets and releases demo capacity');
  refused(fn()=>$d->outcome($b['token'],'confirmed'),'refunded demo cannot be revived');
  $failed=$d->reserve($date,'junior',1,'Guest');$failed=$d->outcome($failed['token'],'failed');test($failed['tickets']===[]&&$d->availability($date)['remaining']===20,'simulated failure issues no tickets and releases holds');

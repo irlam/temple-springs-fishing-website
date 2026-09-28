@@ -7,12 +7,13 @@ final class StaffAccounts {
     public function stamp(array $user,string $key): string {
         return hash_hmac('sha256',json_encode([$user['id'],$user['password'],$user['email'],$user['role'],$this->s->setting('staff_revision_'.$user['id'])],JSON_THROW_ON_ERROR),$key);
     }
-    public function saveBailiff(int $admin,int $id,string $name,string $email,string $password,bool $active): int {
+    public function saveBailiff(int $admin,int $id,string $name,string $email,string $password,bool $active,?array $profile=null): int {
         $name=trim($name);$email=strtolower(trim($email));
         if($name==='' || mb_strlen($name)>100 || strlen($email)>254 || !filter_var($email,FILTER_VALIDATE_EMAIL)) throw new RuntimeException('Enter a name (up to 100 characters) and a valid email address.');
         if(($id===0 || $password!=='') && (strlen($password)<14 || strlen($password)>72)) throw new RuntimeException('Use a password between 14 and 72 bytes long.');
+        if($profile!==null && (mb_strlen($profile['name']??'')>100 || mb_strlen($profile['bio']??'')>500 || (!empty($profile['published']) && trim($profile['name']??'')===''))) throw new RuntimeException('Enter a public name (up to 100 characters) and a bio up to 500 characters.');
         $hash=$password!==''?password_hash($password,PASSWORD_DEFAULT):null;
-        return $this->s->tx(function() use($admin,$id,$name,$email,$hash,$active){
+        return $this->s->tx(function() use($admin,$id,$name,$email,$hash,$active,$profile){
             $actor=$this->s->one("SELECT id FROM users WHERE id=? AND role='admin' AND active=1",[$admin]);
             if(!$actor) throw new RuntimeException('Administrator access required.');
             $old=$id?$this->s->one('SELECT * FROM users WHERE id=?',[$id]):null;
@@ -23,6 +24,7 @@ final class StaffAccounts {
                 $this->s->run("INSERT INTO users(name,email,password,role,active) VALUES(?,?,?,'bailiff',?)",[$name,$email,$hash,(int)$active]);
                 $id=(int)$this->s->db->lastInsertId();
             }
+            if($profile!==null) $this->s->run('INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)',['bailiff_profile_'.$id,json_encode(['published'=>!empty($profile['published']),'name'=>trim($profile['name']??''),'bio'=>trim($profile['bio']??'')],JSON_THROW_ON_ERROR)]);
             // Persist a revocation marker without requiring a database upgrade.
             $this->s->run('INSERT OR REPLACE INTO settings(key,value) VALUES(?,?)',['staff_revision_'.$id,bin2hex(random_bytes(16))]);
             $this->s->audit($admin,$old?'bailiff_updated':'bailiff_created',null,json_encode(['user_id'=>$id,'email'=>$email,'active'=>$active,'password_reset'=>$hash!==null],JSON_THROW_ON_ERROR));

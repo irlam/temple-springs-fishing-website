@@ -25,7 +25,7 @@ try{
  r=await fetch(base+'/staff.php');html=await r.text();const publicCookie=r.headers.get('set-cookie').split(';')[0],publicCsrf=csrf(html);
  r=await fetch(base+'/book.php',{method:'POST',headers:{cookie:publicCookie},body:new URLSearchParams({csrf:publicCsrf,date:booking.date,type:'1',quantity:'1',name:'Forgery',email:'test@example.test',rules:'yes'})});
  check((await r.text()).includes('Bookings are not yet open'),'valid-CSRF forged POST still cannot bypass OFF');
- for(const route of ['/dashboard.php','/settings.php','/bailiffs.php','/scan.php?token='+'a'.repeat(64)]){
+ for(const route of ['/dashboard.php','/settings.php','/bailiffs.php','/spot-checks.php','/scan.php?token='+'a'.repeat(64)]){
   r=await fetch(base+route,{redirect:'manual'});check(r.status===303&&r.headers.get('location')==='/staff.php','authentication required: '+route.split('?')[0]);
  }
  r=await fetch(base+'/booking.php?token='+booking.token);html=await r.text();check(!html.includes('class="qr"')&&html.includes('Payment has not yet been confirmed'),'success/status URL cannot issue tickets');
@@ -43,10 +43,10 @@ try{
  const bailiff=await login('bailiff');
  r=await fetch(base+'/settings.php',{headers:{cookie:bailiff}});check(r.status===403,'bailiff cannot open admin settings');
  r=await fetch(base+'/dashboard.php?export=1',{headers:{cookie:bailiff}});check(r.status===403,'bailiff cannot export customer CSV');
- r=await fetch(base+'/scan.php?token='+ticketToken,{headers:{cookie:bailiff}});html=await r.text();check(html.includes('Confirm check-in')&&html.includes('customer@example.test'),'authenticated scanner shows valid customer details');
- let body=new URLSearchParams({csrf:csrf(html),token:ticketToken});
- r=await fetch(base+'/scan.php',{method:'POST',headers:{cookie:bailiff},body});check((await r.text()).includes('Already Used'),'explicit staff POST checks in');
- r=await fetch(base+'/scan.php',{method:'POST',headers:{cookie:bailiff},body});check((await r.text()).includes('Check-in refused'),'duplicate HTTP check-in rejected');
+ r=await fetch(base+'/scan.php?token='+ticketToken,{headers:{cookie:bailiff}});html=await r.text();check(html.includes('Record spot check')&&html.includes('customer@example.test'),'authenticated scanner shows valid customer details');
+ let body=new URLSearchParams({csrf:csrf(html),token:ticketToken,request:html.match(/name="request" value="([a-f0-9]+)"/)[1]});
+ r=await fetch(base+'/scan.php',{method:'POST',headers:{cookie:bailiff},body});check((await r.text()).includes('Spot check recorded'),'explicit staff POST records spot check');
+ r=await fetch(base+'/scan.php',{method:'POST',headers:{cookie:bailiff},body});check((await r.text()).includes('Spot check recorded'),'duplicate submission safely acknowledged');
  r=await fetch(base+'/scan.php',{method:'POST',headers:{cookie:bailiff},body:new URLSearchParams({token:ticketToken,csrf:'wrong'})});check(r.status===403,'check-in CSRF rejected');
  const admin=await login('admin');r=await fetch(base+'/dashboard.php?export=1',{headers:{cookie:admin}});const csv=await r.text();check(csv.includes("'=Customer Example")&&csv.startsWith('Reference,Date'),'CSV export protects against spreadsheet formula injection');
  r=await fetch(base+'/settings.php',{headers:{cookie:admin}});html=await r.text();
@@ -94,6 +94,16 @@ try{
  const audit=JSON.parse(execFileSync(php,['-r',`require ${JSON.stringify(join(root,'app/bootstrap.php'))}; echo json_encode($s->all("SELECT user_id,detail FROM audit WHERE action LIKE 'bailiff_%'"));`],{env,encoding:'utf8'}));
  check(audit.length===5&&audit.every(a=>String(a.user_id)===adminId)&&!JSON.stringify(audit).includes('password-1234'),'account changes audited to admin without passwords');
  r=await fetch(base+'/dashboard.php',{headers:{cookie:admin}});check(r.status===200,'bailiff changes do not sign admin out');
+ const spots=JSON.parse(execFileSync(php,['-r',`require ${JSON.stringify(join(root,'app/bootstrap.php'))}; echo json_encode($s->all("SELECT * FROM audit WHERE action='spot_check'"));`],{env,encoding:'utf8'}));
+ check(spots.length===1&&JSON.parse(spots[0].detail).bailiff_name&&spots[0].created_at>0,'spot check timestamps and identity logged once despite repeat POST');
+ r=await fetch(base+'/scan.php?token='+ticketToken,{headers:{cookie:bailiff}});html=await r.text();
+ r=await fetch(base+'/scan.php',{method:'POST',headers:{cookie:bailiff},body:new URLSearchParams({csrf:csrf(html),token:ticketToken,request:html.match(/name="request" value="([a-f0-9]+)"/)[1],note:'Peg 4'})});
+ check((await r.text()).includes('Spot check recorded'),'fresh repeat inspection allowed');
+ r=await fetch(base+'/spot-checks.php',{headers:{cookie:admin}});html=await r.text();check(html.includes('Peg 4')&&html.includes('staff ID'),'staff log shows notes and staff identity');
+ await accountPost({id:newId,password:'',published:'1',public_name:'Pat on the bank',bio:'Here to help anglers.'});
+ r=await fetch(base+'/team.php?format=json');let team=await r.json();check(team.length===1&&team[0].name==='Pat on the bank'&&!JSON.stringify(team).includes('@'),'only selected public profile data exposed');
+ await accountPost({id:newId,password:'',published:'1',public_name:'Pat on the bank',active:'0'});
+ r=await fetch(base+'/team.php?format=json');check((await r.json()).length===0,'disabled bailiffs disappear from public list');
  const sw=await readFile(join(root,'public/sw.js'),'utf8');check(!/ASSETS=\[[^\]]*(\.php|\.html|'\/')/.test(sw)&&sw.includes('u.search'),'service worker excludes pages and query strings');
  // Optional real browser checks: layout, QR decoding and actual sign-in on mobile.
  if(process.env.TEMPLE_BROWSER==='1'){

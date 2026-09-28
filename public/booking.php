@@ -18,7 +18,7 @@ if(in_array($b['status'],['paid','complimentary','partially_refunded'],true)) {
     $mail=$s->one('SELECT status FROM outbox WHERE booking_id=?',[$b['id']]);
     notice('Keep this link private. Email delivery: '.($mail['status']??'pending').'. Your tickets remain available here even if email is delayed.');
     foreach($s->all('SELECT * FROM tickets WHERE booking_id=?',[$b['id']]) as $i=>$t) {
-        echo '<article class="ticket panel"><div><p class="eyebrow">'.($b['mode']==='test'?'TEST — NOT VALID FOR ACCESS · ':'').'DIGITAL DAY TICKET · '.($i+1).' / '.$b['quantity'].'</p><h2>'.h($b['date']).'</h2><p>'.h($b['type_name']).'<br>'.h($b['name']).'<br>'.h($b['reference']).'</p><strong>'.($t['checked_at']?'Already checked in':'Present this QR to a bailiff').'</strong><p class="quiet">One person · One check-in · Booked date only</p></div><img class="qr" src="/qr.php?token='.h($t['token']).'" alt="QR code for ticket '.($i+1).'" width="260" height="260"></article>';
+        echo '<article class="ticket panel"><div><p class="eyebrow">'.($b['mode']==='test'?'TEST — NOT VALID FOR ACCESS · ':'').'DIGITAL DAY TICKET · '.($i+1).' / '.$b['quantity'].'</p><h2>'.h($b['date']).'</h2><p>'.h($b['type_name']).'<br>'.h($b['name']).'<br>'.h($b['reference']).'</p><strong>'.'Keep this QR for bankside spot checks'.'</strong><p class="quiet">One person · Booked date only · No bailiff arrival check-in required</p></div><img class="qr" src="/qr.php?token='.h($t['token']).'" alt="QR code for ticket '.($i+1).'" width="260" height="260"></article>';
     }
     echo '<button class="button" id="print-tickets">Print tickets</button>';
 }

@@ -14,7 +14,7 @@ start?.addEventListener('click',async()=>{
     const detector=native?new BarcodeDetector({formats:['qr_code']}):null;
     if(!detector&&!window.jsQR)throw new Error('QR decoder unavailable. Use the manual lookup below.');
     const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
-    status.textContent='Point the camera at the QR code. You will review the ticket before check-in.';
+    status.textContent='Point the camera at the QR code. You will review the ticket before recording a spot check.';
     async function scan(){
       if(!running)return;
       try{
