@@ -24,7 +24,7 @@ These require your account, server and physical devices and were **not** claimed
 
 1. Correct Plesk document root, FPM PHP extensions, private owner/permissions and no PHP source exposure.
 2. Real HTTPS certificate and Cloudflare Full (strict), caching bypass and webhook WAF behaviour.
-3. A real **Stripe test-mode Checkout** in an isolated private staging installation: successful card, declined card, abandon/expire, explicit cancel, duplicate webhook resend, full and partial refund, and success page arriving before webhook confirmation. Confirm amounts match and each booked angler receives one QR.
+3. A real **Stripe test-mode Checkout** in an isolated private staging installation: successful card, Google Pay/Apple Pay where the test device supports them, declined card, abandon/expire, explicit cancel, duplicate webhook resend, dashboard-issued full and partial refunds, and success page arriving before webhook confirmation. Confirm amounts match and each booked angler receives one QR.
 4. Interrupt webhook delivery and verify it can be resent from Stripe safely; interrupt outbound Stripe access and confirm reservations remain safely held.
 5. Real SMTP authentication, TLS, sender verification, inbox/spam receipt, failed delivery/retry and resend. Verify secure links point to the intended hostname.
 6. Plesk scheduled tasks execute as the subscription user every minute/daily; failure notifications reach the operator. Restore a backup into a private copy and inspect integrity and records.
@@ -33,4 +33,4 @@ These require your account, server and physical devices and were **not** claimed
 
 ## Known operational boundaries
 
-SQLite is for a single Plesk host on local storage. Refunds are performed in the Stripe dashboard; the application follows signed refund events. Partial refunds do not revoke individual tickets. Email delivery is at-least-once rather than exactly-once. Camera access depends on browser/device permission; manual lookup is always available. PWA basics do not include offline private pages, offline check-in, push notifications or background payment submission.
+SQLite is for a single Plesk host on local storage. Admins can request full or partial refunds from the dashboard; Stripe remains the payment authority and signed refund webhooks reconcile the final state. Partial refunds do not revoke individual tickets. Email delivery is at-least-once rather than exactly-once. Camera access depends on browser/device permission; manual lookup is always available. PWA basics do not include offline private pages, offline check-in, push notifications or background payment submission.
