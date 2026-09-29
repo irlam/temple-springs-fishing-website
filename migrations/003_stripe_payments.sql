@@ -63,9 +63,10 @@ CREATE TABLE refunds (
     status TEXT NOT NULL DEFAULT 'pending'
         CHECK(status IN (
             'pending',
+            'requires_action',
             'succeeded',
             'failed',
-            'cancelled'
+            'canceled'
         )),
 
     reason TEXT NOT NULL DEFAULT '',
@@ -78,7 +79,7 @@ CREATE TABLE refunds (
     CHECK(
         (status = 'succeeded' AND completed_at IS NOT NULL)
         OR
-        (status IN ('pending', 'failed', 'cancelled'))
+        (status IN ('pending', 'requires_action', 'failed', 'canceled'))
     )
 );
 
