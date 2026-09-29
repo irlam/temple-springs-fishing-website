@@ -76,7 +76,7 @@ try {
     $p=new Payments($s,$config); $fake=new FakeStripe(); Stripe\ApiRequestor::setHttpClient($fake);
     $url=$p->start($attempt); ok($url==='https://checkout.stripe.com/c/pay/mock' && row($attempt['id'])['session_id']==='cs_mock','Checkout request binds session ID');
     ok($fake->calls[0][3]['line_items'][0]['price_data']['unit_amount']===1000,'Stripe amount is server-side price snapshot');
-    ok(($fake->calls[0][3]['automatic_payment_methods']['enabled']??false)===true,'Checkout uses Stripe-managed payment methods and wallets');
+    ok(!isset($fake->calls[0][3]['payment_method_types']),'Checkout does not hard-code card-only methods');
     fails(fn()=>$p->start($attempt),'stale checkout state cannot initiate another payment');
     $s->run("UPDATE settings SET value='0' WHERE key='bookings_enabled'"); $before=count($fake->calls);
     fails(fn()=>$p->start($replacement),'bookings OFF blocks payment initiation'); ok(count($fake->calls)===$before,'OFF never calls Stripe');
