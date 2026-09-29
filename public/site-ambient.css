@@ -1,0 +1,17 @@
+/*
+ * File: site-ambient.css
+ * Purpose: Very subtle, fully transparent-looking decorative background
+ *          animation for the REST of the homepage (everything below the
+ *          hero fish scene, which keeps its own animation unchanged).
+ *          Draws soft drifting "bubble"/light-particle shapes behind the
+ *          page content so it never obstructs text, images or buttons.
+ * Notes:   - Fixed, full-viewport, pointer-events:none, very low opacity.
+ *          - Automatically disabled for prefers-reduced-motion and print.
+ * Last updated: 29/09/2026 (UK date format dd/mm/yyyy)
+ */
+.site-ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.16;mix-blend-mode:soft-light}
+.site-ambient canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.site-header,.opening-strip,main,.site-footer,.mobile-book{position:relative;z-index:1}
+.hero-scene{position:relative;z-index:2}
+@media(prefers-reduced-motion:reduce){.site-ambient{display:none}}
+@media print{.site-ambient{display:none}}

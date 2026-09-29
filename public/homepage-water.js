@@ -1,9 +1,20 @@
+/*
+ * File: homepage-water.js
+ * Purpose: Draws the animated jumping fish scene inside the homepage hero
+ *          banner (".hero-scene" / "#jumping-fish-canvas"). Fish randomly
+ *          leap across the water line, leave ripples and splash droplets.
+ * Notes:   - The Pause/Play button has been REMOVED (2026 update) — the
+ *            hero fish animation now always runs (unless the visitor has
+ *            "prefers-reduced-motion" turned on, or the tab/section is
+ *            not visible, in which case it politely pauses itself).
+ *          - Inspired by Jomohop's "Fish jumping" CodePen.
+ * Last updated: 29/09/2026 (UK date format dd/mm/yyyy)
+ */
 'use strict';
 (()=>{
  const scene=document.querySelector('.hero-scene');
  const canvas=document.querySelector('#jumping-fish-canvas');
- const button=document.querySelector('#motion-toggle');
- if(!scene||!canvas||!button)return;
+ if(!scene||!canvas)return;
 
  const ctx=canvas.getContext('2d',{alpha:true});
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
@@ -13,9 +24,8 @@
   {body:'#b18b49',back:'#674c2d',belly:'#d1b76c',fin:'#8c6838',bars:0},
   {body:'#9aa85d',back:'#435f3b',belly:'#c4ca79',fin:'#c36c38',bars:6}
  ];
- let width=1,height=1,dpr=1,last=0,nextJump=350,paused=false,visible=true;
+ let width=1,height=1,dpr=1,last=0,nextJump=350,visible=true;
  const fish=[],ripples=[],drops=[];
- try{paused=localStorage.getItem('temple-fish-paused')==='1';}catch{}
 
  function resize(){
   const box=scene.getBoundingClientRect();width=Math.max(1,box.width);height=Math.max(1,box.height);dpr=Math.min(devicePixelRatio||1,2);
@@ -31,7 +41,7 @@
   const zoneStart=mobile?width*.56:width*.63,zoneEnd=width*.92,span=Math.min(mobile?width*.32:width*.24,250);
   let start=zoneStart+Math.random()*Math.max(20,zoneEnd-zoneStart-span);if(direction<0)start+=span;
   const waterY=height*(mobile?.69:.70)+Math.random()*18;
-  fish.push({kind:species[Math.floor(Math.random()*species.length)],start,waterY,direction,span,height:height*(mobile?.16:.22),age:0,duration:1450+Math.random()*500,size:(mobile?30:42)+Math.random()*(mobile?13:22)});
+  fish.push({kind:species[Math.floor(Math.random()*species.length)],start,waterY,direction,span,height:height*(mobile?.16:.22),age:0,duration:1450+Math.random()*500,size:(mobile?30:42)+Math.random()*14});
   splash(start,waterY,direction);
  }
  function fishPath(f,p){
@@ -49,14 +59,14 @@
   ctx.beginPath();ctx.moveTo(-s*.12,-s*.22);ctx.lineTo(s*.05,-s*.43);ctx.lineTo(s*.25,-s*.2);ctx.closePath();ctx.fill();
   ctx.beginPath();ctx.moveTo(-s*.03,s*.2);ctx.lineTo(-s*.18,s*.41);ctx.lineTo(s*.17,s*.22);ctx.closePath();ctx.fill();
   ctx.fillStyle=g;bodyPath(s);ctx.fill();
-  if(f.kind.bars){ctx.save();bodyPath(s);ctx.clip();ctx.strokeStyle='#273f32aa';ctx.lineWidth=s*.065;for(let i=0;i<f.kind.bars;i++){const x=-s*.30+i*s*.13;ctx.beginPath();ctx.moveTo(x,-s*.25);ctx.lineTo(x+s*.08,s*.24);ctx.stroke();}ctx.restore();}
+  if(f.kind.bars){ctx.save();bodyPath(s);ctx.clip();ctx.strokeStyle='#273f32aa';ctx.lineWidth=s*.065;for(let i=0;i<f.kind.bars;i++){const x=-s*.30+i*s*.13;ctx.beginPath();ctx.moveTo(x,-s*.25);ctx.lineTo(x,s*.25);ctx.stroke();}ctx.restore();}
   ctx.strokeStyle='#f4efcf55';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-s*.32,0);ctx.quadraticCurveTo(0,-s*.08,s*.36,0);ctx.stroke();
   ctx.fillStyle='#e8c46c';ctx.beginPath();ctx.arc(s*.37,-s*.07,s*.055,0,Math.PI*2);ctx.fill();ctx.fillStyle='#142a25';ctx.beginPath();ctx.arc(s*.385,-s*.07,s*.029,0,Math.PI*2);ctx.fill();ctx.restore();
  }
  function drawRipple(r){if(r.age<0)return;const p=Math.min(1,r.age/r.life);ctx.save();ctx.globalAlpha=(1-p)*.34;ctx.strokeStyle='#e5edcf';ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(r.x,r.y,9+p*62,3+p*13,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
  function drawDrop(d){const t=d.age/1000;ctx.save();ctx.globalAlpha=Math.max(0,1-d.age/d.life)*.55;ctx.fillStyle='#eff3dd';ctx.beginPath();ctx.arc(d.x+d.vx*t,d.y+d.vy*t+170*t*t,d.r,0,Math.PI*2);ctx.fill();ctx.restore();}
  function frame(now){
-  const delta=Math.min(40,now-last||16);last=now;ctx.clearRect(0,0,width,height);const running=!paused&&!reduced.matches&&visible&&!document.hidden;
+  const delta=Math.min(40,now-last||16);last=now;ctx.clearRect(0,0,width,height);const running=!reduced.matches&&visible&&!document.hidden;
   if(running){nextJump-=delta;if(nextJump<=0&&fish.length<3){spawn();nextJump=900+Math.random()*1800;}fish.forEach(f=>f.age+=delta);ripples.forEach(r=>r.age+=delta);drops.forEach(d=>d.age+=delta);}
   for(const f of fish){const p=Math.min(1,f.age/f.duration);drawFish(f,p,true);drawFish(f,p,false);if(running&&f.age>=f.duration&&f.age-delta<f.duration)splash(f.start+f.direction*f.span,f.waterY,f.direction);}
   ripples.forEach(drawRipple);drops.forEach(drawDrop);
@@ -65,10 +75,9 @@
   for(let i=drops.length-1;i>=0;i--)if(drops[i].age>drops[i].life)drops.splice(i,1);
   requestAnimationFrame(frame);
  }
- function update(){const stopped=paused||reduced.matches;button.hidden=reduced.matches;button.textContent=paused?'Play fish animation':'Pause fish animation';button.setAttribute('aria-pressed',String(paused));scene.classList.toggle('water-paused',stopped);}
- button.addEventListener('click',()=>{paused=!paused;try{localStorage.setItem('temple-fish-paused',paused?'1':'0');}catch{}update();});
+ function update(){scene.classList.toggle('water-paused',reduced.matches);}
  reduced.addEventListener('change',update);document.addEventListener('visibilitychange',update);
  if('ResizeObserver' in window)new ResizeObserver(resize).observe(scene);else addEventListener('resize',resize);
  if('IntersectionObserver' in window)new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;}).observe(scene);
- resize();update();if(!reduced.matches){spawn();setTimeout(()=>{if(!paused)spawn();},620);}requestAnimationFrame(frame);
+ resize();update();if(!reduced.matches){spawn();setTimeout(()=>{spawn();},620);}requestAnimationFrame(frame);
 })();

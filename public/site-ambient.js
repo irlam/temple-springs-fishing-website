@@ -26,7 +26,7 @@
  const ctx=canvas.getContext('2d',{alpha:true});
  let width=1,height=1,dpr=1,last=0;
  const particles=[];
- const COUNT_PER_1000PX=0.06; // gentle density, kept low on purpose
+ const COUNT_PER_1000PX=0.06;
 
  function resize(){
   width=window.innerWidth;height=Math.max(window.innerHeight,document.documentElement.scrollHeight);
@@ -79,14 +79,11 @@
   if(!document.hidden){step(delta);draw();}
   requestAnimationFrame(frame);
  }
-
  let resizeTimer;
  function onResize(){clearTimeout(resizeTimer);resizeTimer=setTimeout(resize,150);}
  addEventListener('resize',onResize);
  addEventListener('load',resize);
-
  reduced.addEventListener('change',()=>{wrap.style.display=reduced.matches?'none':'';});
-
  resize();
  requestAnimationFrame(frame);
 })();
