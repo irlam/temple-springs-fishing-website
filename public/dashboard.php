@@ -43,10 +43,20 @@ foreach(array_slice($rows,0,30) as $b) {
     echo '<article class="panel"><div class="booking-title"><h3>'.h($b['reference']).'</h3><span class="pill">'.h($b['mode'].' · '.$b['status']).'</span></div><p>'.h($b['date']).' · '.h($b['type_name']).' × '.$b['quantity'].' · '.money($b['total']).'<br>'.h($b['name']).' · '.h($b['email']).'</p>';
     if($b['note']) echo '<p>Record: '.h($b['note']).'</p>';
     if($isAdmin) {
-        echo '<p class="quiet">Email: '.h($b['email_status']??'not issued').' '.h($b['last_error']).'<br>Stripe session: '.h($b['session_id']??'—').'<br>Payment intent: '.h($b['payment_intent']??'—').' · Refunded: '.money($b['refund_amount']).'</p><form class="toolbar" method="post">'.csrf().'<input type="hidden" name="booking_id" value="'.$b['id'].'">';
+        echo '<p class="quiet">Email: '.h($b['email_status']??'not issued').' '.h($b['last_error']).'<br>Stripe session: '.h($b['session_id']??'—').'<br>Payment intent: '.h($b['payment_intent']??'—').' · Paid: '.money($b['amount_paid']).' · Refunded: '.money($b['refund_amount']).' · Method: '.h($b['payment_method']??'—').'</p><form class="toolbar" method="post">'.csrf().'<input type="hidden" name="booking_id" value="'.$b['id'].'">';
         if($b['email_status']) echo '<button name="action" value="retry_email" class="button secondary">Resend ticket email</button>';
         if(in_array($b['status'],['creating','pending','complimentary'],true)) echo '<button name="action" value="cancel" class="button secondary">Cancel booking</button>';
         echo '</form>';
+        $remaining=max(0,(int)$b['amount_paid']-(int)$b['refund_amount']);
+        if($remaining>0 && in_array($b['status'],['paid','partially_refunded','refund_required'],true)) {
+            echo '<form class="panel" method="post">'.csrf().'<input type="hidden" name="booking_id" value="'.$b['id'].'"><h4>Stripe refund</h4><div class="form-row"><label>Amount (£)<input name="refund_amount" inputmode="decimal" value="'.number_format($remaining/100,2,'.','').'" required></label><label>Reason<input name="refund_reason" maxlength="500" placeholder="Customer cancellation" required></label></div><button name="action" value="refund" class="button secondary">Issue refund</button></form>';
+        }
+        $refunds=$s->all('SELECT * FROM refunds WHERE booking_id=? ORDER BY id DESC',[$b['id']]);
+        if($refunds) {
+            echo '<p class="quiet"><strong>Refund history</strong><br>';
+            foreach($refunds as $r) echo h($r['stripe_refund_id']).' · '.money($r['amount']).' · '.h($r['status']).'<br>';
+            echo '</p>';
+        }
     }
     foreach($s->all('SELECT * FROM tickets WHERE booking_id=?',[$b['id']]) as $i=>$t) echo '<a class="ticket-link" href="/scan.php?token='.h($t['token']).'">Ticket '.($i+1).' · '.'Inspect ticket'.' ↗</a> ';
     echo '</article>';
