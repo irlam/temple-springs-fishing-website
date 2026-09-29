@@ -14,7 +14,7 @@ composer install --no-dev --prefer-dist --optimize-autoloader
 php bin/console.php migrate
 ```
 
-Migration 002 upgrades the booking status constraints while preserving existing bookings, tickets and check-ins. Back up first. Do not delete the database or rerun SQL manually. Keep bookings OFF. Open `/` for the redesigned homepage and `/demo.php` for the complete payment-free practice journey; no Stripe account is needed for the demo. If the old homepage remains, confirm deployment completed, hard-refresh the browser, and purge any existing Cloudflare cached homepage. See [DEMO.md](DEMO.md).
+Migrations 002 and 003 upgrade booking/payment tracking while preserving existing bookings, tickets and check-ins. Migration 003 adds Stripe payment metadata, webhook processing fields, ticket generation timestamps and refund history. Back up first. Do not delete the database or rerun SQL manually. Keep bookings OFF. Open `/` for the redesigned homepage and `/demo.php` for the complete payment-free practice journey; no Stripe account is needed for the demo. If the old homepage remains, confirm deployment completed, hard-refresh the browser, and purge any existing Cloudflare cached homepage. See [DEMO.md](DEMO.md).
 
 ## Initial admin setup without SSH
 
@@ -119,11 +119,14 @@ checkout.session.async_payment_succeeded
 checkout.session.async_payment_failed
 payment_intent.payment_failed
 charge.refunded
+refund.created
+refund.updated
+refund.failed
 ```
 
 Use the API version matching the pinned Stripe SDK (`2025-08-27.basil` for Stripe PHP 17.x). Put this destination's signing secret (`whsec_...`) in `stripe_webhook_secret`. CLI forwarding uses a different secret; don't confuse it with the dashboard destination secret. The endpoint rejects invalid signatures and the wrong test/live mode.
 
-Only confirmed paid Checkout webhook events issue tickets. A success-page visit cannot mark a booking paid. Card declines are logged; they do not free capacity while Checkout is still open and retryable. Expired/terminally failed Checkout frees the reservation. Refunds update from `charge.refunded`; make refunds in the Stripe dashboard. Full refunds invalidate all tickets, partial refunds retain the booking/tickets and record the refunded amount. Use a full refund when cancelling the entire booking.
+Only confirmed paid Checkout webhook events issue tickets. A success-page visit cannot mark a booking paid. Card declines are logged; they do not free capacity while Checkout is still open and retryable. Expired/terminally failed Checkout frees the reservation. Admins can issue full or partial refunds from the fishery dashboard. The server creates the refund through Stripe and signed `refund.*` / `charge.refunded` webhooks reconcile the final state. Full refunds invalidate all tickets; partial refunds retain the booking/tickets and record the refunded amount. Stripe Dashboard refunds are also reconciled by the webhook when Stripe supplies the payment/refund relationship.
 
 **Do not enable public bookings just to test while rights are unconfirmed.** Run the automated fixture suites locally. For an actual Stripe test checkout before opening, use an isolated, non-public staging copy with a separate private database, explicitly temporary test controls and no claim of fishing permission; keep the production OFF setting unchanged. An operator can temporarily set that isolated test database's `bookings_enabled` setting to `1` for testing using SQLite, then return it to `0`. Never do that on the public production database. Use Stripe's official test card details and complete the pre-launch checks in TESTING.md.
 
