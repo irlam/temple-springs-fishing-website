@@ -36,14 +36,14 @@
  }
  function fishPath(f,p){
   const x=f.start+f.direction*f.span*p,y=f.waterY-Math.sin(Math.PI*p)*f.height;
-  return{x,y,angle:Math.atan2(-Math.PI*f.height*Math.cos(Math.PI*p),f.direction*f.span)};
+  return{x,y,angle:Math.atan2(-Math.PI*f.height*Math.cos(Math.PI*p),Math.abs(f.span))};
  }
  function bodyPath(size){
   ctx.beginPath();ctx.moveTo(-size*.55,0);ctx.bezierCurveTo(-size*.25,-size*.32,size*.28,-size*.32,size*.55,0);ctx.bezierCurveTo(size*.28,size*.32,-size*.25,size*.32,-size*.55,0);ctx.closePath();
  }
  function drawFish(f,p,reflection=false){
   const pos=fishPath(f,p),fade=Math.min(1,p*5,(1-p)*5),s=f.size;ctx.save();
-  ctx.translate(pos.x,reflection?f.waterY+(f.waterY-pos.y)*.48:pos.y);ctx.scale(1,reflection?-.48:1);ctx.rotate(pos.angle);ctx.globalAlpha=(reflection?.12:.72)*fade;
+  ctx.translate(pos.x,reflection?f.waterY+(f.waterY-pos.y)*.48:pos.y);ctx.scale(1,reflection?-.48:1);ctx.rotate(pos.angle);ctx.scale(f.direction,1);ctx.globalAlpha=(reflection?.12:.72)*fade;
   const g=ctx.createLinearGradient(0,-s*.26,0,s*.28);g.addColorStop(0,f.kind.back);g.addColorStop(.52,f.kind.body);g.addColorStop(1,f.kind.belly);
   ctx.fillStyle=f.kind.fin;ctx.beginPath();ctx.moveTo(-s*.49,0);ctx.lineTo(-s*.82,-s*.31);ctx.lineTo(-s*.72,0);ctx.lineTo(-s*.82,s*.31);ctx.closePath();ctx.fill();
   ctx.beginPath();ctx.moveTo(-s*.12,-s*.22);ctx.lineTo(s*.05,-s*.43);ctx.lineTo(s*.25,-s*.2);ctx.closePath();ctx.fill();

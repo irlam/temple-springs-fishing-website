@@ -1,5 +1,5 @@
 // Deliberately cache only immutable public assets, NEVER pages or request queries.
-const CACHE='temple-springs-assets-v4';
+const CACHE='temple-springs-assets-v5';
 const ASSETS=['/styles.css','/fishery.css','/fishery.js','/homepage-water.css','/homepage-water.js','/assets/mark.svg','/assets/landscape.svg','/assets/icon-192.png','/assets/icon-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('temple-springs-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
