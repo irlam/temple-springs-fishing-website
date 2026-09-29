@@ -112,7 +112,7 @@ final class Payments {
                     (string)($refund->failure_reason??''),
                 ]
             );
-            $this->s->audit($userId,'refund_requested',(int)$b['id'],money($amount).' · '.$reason);
+            $this->s->audit($userId,'refund_requested',(int)$b['id'],'£'.number_format($amount/100,2,'.','').' · '.$reason);
             return $refund->toArray();
         });
     }
