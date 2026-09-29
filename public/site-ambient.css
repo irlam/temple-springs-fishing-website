@@ -5,11 +5,20 @@
  *          hero fish scene, which keeps its own animation unchanged).
  *          Draws soft drifting "bubble"/light-particle shapes behind the
  *          page content so it never obstructs text, images or buttons.
- * Notes:   - Full-page, pointer-events:none, very low opacity.
+ * Notes:   - Full-page, pointer-events:none. Opacity is controlled entirely
+ *            per-particle in site-ambient.js, so no extra wrapper opacity
+ *            is applied here (stacking two opacities made the animation
+ *            almost invisible). "multiply" is used instead of "soft-light"
+ *            because soft-light barely affects similarly light colours
+ *            (like this site's cream/paper backgrounds), whereas multiply
+ *            reliably tints/darkens regardless of background lightness;
+ *            per-particle alpha stays low (max ~0.22) to keep it gentle.
  *          - Automatically disabled for prefers-reduced-motion and print.
- * Last updated: 29/09/2026 (UK date format dd/mm/yyyy)
+ * Last updated: 29/09/2026 (UK date format dd/mm/yyyy) - fixed animation
+ *          being effectively invisible (compounded opacity + low-contrast
+ *          soft-light blend on light backgrounds).
  */
-.site-ambient{position:absolute;top:0;left:0;right:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.16;mix-blend-mode:soft-light}
+.site-ambient{position:absolute;top:0;left:0;right:0;z-index:0;pointer-events:none;overflow:hidden;mix-blend-mode:multiply}
 .site-ambient canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .site-header,.opening-strip,main,.site-footer,.mobile-book{position:relative;z-index:1}
 .hero-scene{position:relative;z-index:2}

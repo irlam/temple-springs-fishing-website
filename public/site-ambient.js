@@ -4,11 +4,14 @@
  *          particle animation that sits behind the whole page (outside
  *          of the hero banner, which keeps its own separate jumping fish
  *          animation from homepage-water.js completely unchanged).
- * Notes:   - Fixed full-page canvas, pointer-events:none, very low opacity
- *            (see site-ambient.css), so it never blocks clicks or reading.
+ * Notes:   - Full-page canvas, pointer-events:none. Each particle's own
+ *            alpha controls visibility (see draw()); site-ambient.css no
+ *            longer applies an extra wrapper opacity on top of this.
  *          - Automatically stays off for prefers-reduced-motion, when the
  *            browser tab is hidden, or if the page is being printed.
- * Last updated: 29/09/2026 (UK date format dd/mm/yyyy)
+ * Last updated: 29/09/2026 (UK date format dd/mm/yyyy) - fixed animation
+ *          being effectively invisible (compounded opacity + low-contrast
+ *          colour on light backgrounds).
  */
 'use strict';
 (()=>{
@@ -51,7 +54,7 @@
    drift:(Math.random()-.5)*10,
    wobble:Math.random()*Math.PI*2,
    wobbleSpeed:.4+Math.random()*.6,
-   alpha:.08+Math.random()*.18
+   alpha:.08+Math.random()*.14
   };
  }
  function step(delta){
@@ -67,8 +70,8 @@
   ctx.clearRect(0,0,width,height);
   for(const p of particles){
    const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
-   g.addColorStop(0,`rgba(223,236,196,${p.alpha})`);
-   g.addColorStop(1,'rgba(223,236,196,0)');
+   g.addColorStop(0,`rgba(89,114,75,${p.alpha})`);
+   g.addColorStop(1,'rgba(89,114,75,0)');
    ctx.fillStyle=g;
    ctx.beginPath();
    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
