@@ -4,7 +4,7 @@ require dirname(__DIR__).'/vendor/autoload.php';
 date_default_timezone_set('Europe/London');
 use Temple\{Store,Booking,Payments,Mail};
 $dir=sys_get_temp_dir().'/temple-tests-'.bin2hex(random_bytes(6)); mkdir($dir,0700);
-$s=new Store($dir.'/test.sqlite'); $s->db->exec(file_get_contents(dirname(__DIR__).'/migrations/001.sql')); $b=new Booking($s);
+$s=new Store($dir.'/test.sqlite'); foreach(glob(dirname(__DIR__).'/migrations/*.sql') as $migration) $s->db->exec(file_get_contents($migration)); $b=new Booking($s);
 $count=0;
 function ok(bool $condition,string $name): void { global $count; if(!$condition) throw new RuntimeException('FAIL: '.$name); echo 'PASS: '.$name."\n"; $count++; }
 function fails(callable $f,string $name): void { $thrown=false; try{$f();}catch(Throwable $e){$thrown=true;} ok($thrown,$name); }
@@ -18,6 +18,7 @@ class FakeStripe implements Stripe\HttpClient\ClientInterface {
     public function request($method,$url,$headers,$params,$hasFile,$apiMode='v1',$maxNetworkRetries=null) {
         $this->calls[]=[$method,$url,$headers,$params];
         if($this->error) throw new RuntimeException('Simulated unavailable network');
+        if(str_ends_with($url,'/v1/refunds')) return [json_encode(['id'=>'re_mock','object'=>'refund','amount'=>(int)($params['amount']??0),'status'=>'succeeded','payment_intent'=>$params['payment_intent']??null,'metadata'=>$params['metadata']??[],'created'=>time()]),200,[]];
         $state=str_ends_with($url,'/expire')?'expired':$this->state;
         return [json_encode(['id'=>'cs_mock','object'=>'checkout.session','url'=>'https://checkout.stripe.com/c/pay/mock','status'=>$state]),200,[]];
     }
@@ -75,13 +76,18 @@ try {
     $p=new Payments($s,$config); $fake=new FakeStripe(); Stripe\ApiRequestor::setHttpClient($fake);
     $url=$p->start($attempt); ok($url==='https://checkout.stripe.com/c/pay/mock' && row($attempt['id'])['session_id']==='cs_mock','Checkout request binds session ID');
     ok($fake->calls[0][3]['line_items'][0]['price_data']['unit_amount']===1000,'Stripe amount is server-side price snapshot');
-    ok($fake->calls[0][3]['payment_method_types']===['card'],'checkout uses immediate card methods only');
+    ok(($fake->calls[0][3]['automatic_payment_methods']['enabled']??false)===true,'Checkout uses Stripe-managed payment methods and wallets');
     fails(fn()=>$p->start($attempt),'stale checkout state cannot initiate another payment');
     $s->run("UPDATE settings SET value='0' WHERE key='bookings_enabled'"); $before=count($fake->calls);
     fails(fn()=>$p->start($replacement),'bookings OFF blocks payment initiation'); ok(count($fake->calls)===$before,'OFF never calls Stripe');
     $fake->state='complete'; $p->expire(row($attempt['id'])); ok(row($attempt['id'])['status']==='pending','completed payment holds capacity awaiting signed webhook');
     $fake->state='open'; $p->expire(row($attempt['id']),'cancelled'); ok(row($attempt['id'])['status']==='cancelled','server expiry confirms cancellation before release');
     $b->event(event(row($attempt['id'])),false); ok(row($attempt['id'])['status']==='refund_required','paid event cannot revive cancelled reservation');
+    $refundResult=$p->refund(row($attempt['id']),500,'Customer cancellation',1);
+    ok($refundResult['id']==='re_mock' && $s->one('SELECT status FROM refunds WHERE stripe_refund_id=?',['re_mock'])['status']==='succeeded','admin refund request is recorded with Stripe refund ID');
+    $refundEvent=['id'=>'evt_refund_created','type'=>'refund.created','livemode'=>false,'data'=>['object'=>$refundResult]];
+    $b->event($refundEvent,false);
+    ok(row($attempt['id'])['refund_amount']===500,'successful refund webhook updates booking refund total');
     $raw=json_encode(event($replacement)); $ts=time(); $sig='t='.$ts.',v1='.hash_hmac('sha256',$ts.'.'.$raw,'whsec_fixture');
     ok(Stripe\Webhook::constructEvent($raw,$sig,'whsec_fixture')->type==='checkout.session.completed','signed webhook verification accepts authentic fixture');
     fails(fn()=>Stripe\Webhook::constructEvent($raw.' ',$sig,'whsec_fixture'),'tampered webhook rejected');
