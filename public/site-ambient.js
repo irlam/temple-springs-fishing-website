@@ -30,6 +30,7 @@
 
  function resize(){
   width=window.innerWidth;height=Math.max(window.innerHeight,document.documentElement.scrollHeight);
+  wrap.style.height=height+'px';
   dpr=Math.min(devicePixelRatio||1,1.5);
   canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
   canvas.style.width=width+'px';canvas.style.height=height+'px';
