@@ -54,7 +54,7 @@
    drift:(Math.random()-.5)*10,
    wobble:Math.random()*Math.PI*2,
    wobbleSpeed:.4+Math.random()*.6,
-   alpha:.1+Math.random()*.22
+   alpha:.08+Math.random()*.14
   };
  }
  function step(delta){

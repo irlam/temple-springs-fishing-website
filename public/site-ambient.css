@@ -8,7 +8,11 @@
  * Notes:   - Full-page, pointer-events:none. Opacity is controlled entirely
  *            per-particle in site-ambient.js, so no extra wrapper opacity
  *            is applied here (stacking two opacities made the animation
- *            almost invisible).
+ *            almost invisible). "multiply" is used instead of "soft-light"
+ *            because soft-light barely affects similarly light colours
+ *            (like this site's cream/paper backgrounds), whereas multiply
+ *            reliably tints/darkens regardless of background lightness;
+ *            per-particle alpha stays low (max ~0.22) to keep it gentle.
  *          - Automatically disabled for prefers-reduced-motion and print.
  * Last updated: 29/09/2026 (UK date format dd/mm/yyyy) - fixed animation
  *          being effectively invisible (compounded opacity + low-contrast
