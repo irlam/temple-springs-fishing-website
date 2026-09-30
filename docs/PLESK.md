@@ -14,7 +14,7 @@ composer install --no-dev --prefer-dist --optimize-autoloader
 php bin/console.php migrate
 ```
 
-Migrations 002 and 003 upgrade booking/payment tracking while preserving existing bookings, tickets and check-ins. Migration 003 adds Stripe payment metadata, webhook processing fields, ticket generation timestamps and refund history. Back up first. Do not delete the database or rerun SQL manually. Keep bookings OFF. Open `/` for the redesigned homepage and `/demo.php` for the complete payment-free practice journey; no Stripe account is needed for the demo. If the old homepage remains, confirm deployment completed, hard-refresh the browser, and purge any existing Cloudflare cached homepage. See [DEMO.md](DEMO.md).
+Migrations 002 and 003 upgrade booking/payment tracking while preserving existing bookings, tickets and check-ins. Migration 003 adds Stripe payment metadata, webhook processing fields, ticket generation timestamps and refund history. Back up first. Do not delete the database or rerun SQL manually. Keep bookings OFF. Open `/` for the public homepage and `/book.php` for the production booking journey. If an old page remains, confirm deployment completed, hard-refresh the browser, and purge any existing Cloudflare and service-worker caches.
 
 ## Initial admin setup without SSH
 
@@ -86,7 +86,7 @@ chmod 600 config.php
 /opt/plesk/php/8.3/bin/php bin/console.php health
 ```
 
-The account command runs only in an interactive terminal, prompts invisibly for a password of at least 14 characters and stores a password hash. Run it again to reset a password. Create bailiffs using `user EMAIL bailiff "Name"`. No initial password is supplied in the repository.
+The account command runs only in an interactive terminal, prompts invisibly for a password of at least 8 characters and stores a password hash. Run it again to reset a password. Create bailiffs using `user EMAIL bailiff "Name"`. No initial password is supplied in the repository.
 
 ## 3. Cloudflare DNS, HTTPS and caching
 

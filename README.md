@@ -17,11 +17,9 @@ php bin/console.php health
 
 The `user` command prompts for a password privately; there is no web installer, default password or public account registration. Run it from an interactive terminal. Staff sign-in: `/staff.php`.
 
-## Try booking without a payment account
+## Booking readiness
 
-Open `/demo.php` after installing Composer dependencies. The separate practice system needs **no Stripe keys, SMTP account or initial admin**. Choose a date, tickets and a made-up name, simulate a payment, then view, print and scan individual QR tickets. You can also simulate failure, cancellation and refund. No money is collected, no email is sent, and demo tickets never grant access. See [docs/DEMO.md](docs/DEMO.md).
-
-Real bookings remain OFF. When rights and access are confirmed, the existing Stripe Checkout integration can be configured first in test mode, then live mode.
+The production journey is `/book.php`. Keep bookings OFF while rights and access are unconfirmed. Configure Stripe in test mode and complete the acceptance checks in [docs/TESTING.md](docs/TESTING.md) before considering live mode. The server refuses both reservations and payment initiation while the admin switch is OFF.
 
 ## What is included
 
@@ -42,8 +40,6 @@ composer install
 php tests/run.php
 node tests/http.mjs
 node tests/cli.mjs
-php tests/demo.php
-node tests/demo-browser.mjs
 node tests/migration.mjs
 # Optional browser checks after installing Playwright and Chromium locally:
 TEMPLE_BROWSER=1 node tests/http.mjs

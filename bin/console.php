@@ -24,9 +24,9 @@ try {
         $email=strtolower($argv[2]??''); $role=$argv[3]??''; $name=$argv[4]??'';
         if(!filter_var($email,FILTER_VALIDATE_EMAIL) || !in_array($role,['admin','bailiff'],true) || !$name) throw new RuntimeException('Usage: user email admin|bailiff "Full name"');
         if(!function_exists('stream_isatty') || !stream_isatty(STDIN)) throw new RuntimeException('Run account creation in an interactive terminal. Passwords must not be passed on the command line.');
-        fwrite(STDOUT,'New password (minimum 14 characters, hidden): '); system('stty -echo');
+        fwrite(STDOUT,'New password (minimum 8 characters, hidden): '); system('stty -echo');
         try { $password=rtrim(fgets(STDIN),"\r\n"); } finally { system('stty echo'); echo "\n"; }
-        if(strlen($password)<14) throw new RuntimeException('Password must have at least 14 characters.');
+        if(strlen($password)<8) throw new RuntimeException('Password must have at least 8 characters.');
         $s->run('INSERT INTO users(email,name,password,role) VALUES(?,?,?,?) ON CONFLICT(email) DO UPDATE SET name=excluded.name,password=excluded.password,role=excluded.role,active=1',[$email,$name,password_hash($password,PASSWORD_DEFAULT),$role]);
         // Invalidate existing sessions after any account reset or role change.
         foreach(glob($data.'/sessions/sess_*') as $file) unlink($file);

@@ -68,7 +68,7 @@ Arrival check-in is not required. Once fishing opens, a valid dated ticket and c
 
 Use **Bankside spot check** to scan or look up a ticket. Press **Record spot check** after reviewing it. This records a UK-displayable timestamp, immutable staff-name snapshot and staff ID, ticket ID, result and optional note. Wrong-date/refunded/cancelled results can be recorded as inspections, not approvals. Repeat checks do not consume tickets. Reposting the same form is idempotent; a new inspection form records a new event. The **Spot-check log** shows all records with pagination, or a booking's history. Historical arrival records remain intact; they do not prevent spot checks. The legacy checkIn service is retained for compatibility but no longer used by the staff scanner.
 
-In **Manage bailiffs**, set a public display name, introduction and Published status. Only active published bailiffs appear in the homepage team section and /team.php; emails are never public. Obtain their agreement before publishing. No database migration is required; profiles use existing settings and inspections use the existing append-only application audit trail. Deploy all files together. The anonymous demo simulates repeat checks but is separate from real staff inspection records.
+In **Manage bailiffs**, set a public display name, introduction and Published status. Only active published bailiffs appear in the homepage team section and /team.php; emails are never public. Obtain their agreement before publishing. No database migration is required; profiles use existing settings and inspections use the existing append-only application audit trail. Deploy all files together.
 
 
 ## Optional bailiff portraits
