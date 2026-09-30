@@ -1,7 +1,7 @@
 <?php
 require dirname(__DIR__).'/vendor/autoload.php';
 date_default_timezone_set('Europe/London');
-$s=new Temple\Store(':memory:');$s->db->exec(file_get_contents(dirname(__DIR__).'/migrations/001.sql'));
+$s=new Temple\Store(':memory:');foreach(glob(dirname(__DIR__).'/migrations/*.sql') as $migration)$s->db->exec(file_get_contents($migration));
 $b=new Temple\Booking($s);$checks=new Temple\SpotChecks($s,$b);
 $s->run("INSERT INTO users(email,name,password,role) VALUES('admin@test.test','Admin','unused','admin'),('bailiff@test.test','Original Name','unused','bailiff')");
 $s->run("UPDATE settings SET value='1' WHERE key='bookings_enabled'");
